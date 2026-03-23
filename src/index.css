@@ -21,6 +21,7 @@
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
     --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.985 0 0);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
@@ -38,6 +39,8 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --success: oklch(0.7 0.18 145);
+    --warning: oklch(0.75 0.18 55);
 }
 
 .dark {
@@ -56,6 +59,7 @@
     --accent: oklch(0.269 0 0);
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.704 0.191 22.216);
+    --destructive-foreground: oklch(0.985 0 0);
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.556 0 0);
@@ -93,6 +97,7 @@
     --color-input: var(--input);
     --color-border: var(--border);
     --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
     --color-muted-foreground: var(--muted-foreground);
@@ -114,6 +119,78 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    /* GiGi brand colors (values set per-page; transparent fallback elsewhere) */
+    --color-lime: var(--lime, transparent);
+    --color-charcoal: var(--charcoal, transparent);
+    --color-pineapple: var(--pineapple, transparent);
+    --color-coconut: var(--coconut, transparent);
+}
+
+/* ── Home page theming (scoped – does not affect profile/auth) ──────────── */
+/* hsl(128 100% 92%) ≈ oklch(0.96 0.06 150) — lime brand accent               */
+/* hsl(90  95%  90%) ≈ oklch(0.97 0.07 135) — pineapple warm-green              */
+/* hsl(90  60%  95%) ≈ oklch(0.98 0.02 132) — coconut near-white green tint     */
+.home-page {
+    --card:                 oklch(0.98 0 0);        /* ← was 1 0 0 */
+    --primary:              oklch(0.145 0 0);       /* ← was 0.205 darker charcoal */
+    --primary-foreground:   oklch(0.96 0.06 150);   /* ← was 0.985 → lime green */
+    --secondary-foreground: oklch(0.145 0 0);       /* ← was 0.205 */
+    --muted-foreground:     oklch(0.443 0 0);       /* ← was 0.556 → darker */
+    --accent:               oklch(0.96 0.06 150);   /* ← was 0.97 neutral → lime tint */
+    --accent-foreground:    oklch(0.145 0 0);       /* ← was 0.205 */
+    --border:               oklch(0.90 0 0);        /* ← was 0.922 */
+    --input:                oklch(0.90 0 0);        /* ← was 0.922 */
+    --ring:                 oklch(0.96 0.06 150);   /* ← was 0.708 → lime ring */
+    --radius:               0.5rem;                 /* ← was 0.625rem */
+    /* GiGi brand custom colors */
+    --lime:      oklch(0.96 0.06 150);
+    --charcoal:  oklch(0.145 0 0);
+    --pineapple: oklch(0.97 0.07 135);
+    --coconut:   oklch(0.98 0.02 132);
+}
+
+/* ── Profile page theming (scoped – does not affect home/auth) ───────────── */
+
+/* Dark mode: full custom palette, activated by toggling .dark on the wrapper */
+/* Also requires toggling .dark on <html> so Radix portals (Select, Popover) pick up dark vars */
+.profile-page.dark {
+    --background: oklch(0.09 0.005 260);
+    --foreground: oklch(0.95 0 0);
+    --card: oklch(0.12 0.005 260);
+    --card-foreground: oklch(0.95 0 0);
+    --popover: oklch(0.12 0.005 260);
+    --popover-foreground: oklch(0.95 0 0);
+    --primary: oklch(0.7 0.18 145);
+    --primary-foreground: oklch(0.09 0.005 260);
+    --secondary: oklch(0.18 0.005 260);
+    --secondary-foreground: oklch(0.95 0 0);
+    --muted: oklch(0.18 0.005 260);
+    --muted-foreground: oklch(0.65 0 0);
+    --accent: oklch(0.7 0.18 145);
+    --accent-foreground: oklch(0.09 0.005 260);
+    --destructive: oklch(0.65 0.2 25);
+    --destructive-foreground: oklch(0.95 0 0);
+    --border: oklch(0.22 0.005 260);
+    --input: oklch(0.25 0.01 260);;
+    --ring: oklch(0.7 0.18 145);
+    --chart-1: oklch(0.7 0.18 220);
+    --chart-2: oklch(0.7 0.18 145);
+    --chart-3: oklch(0.75 0.18 55);
+    --chart-4: oklch(0.65 0.2 25);
+    --chart-5: oklch(0.7 0.15 300);
+    --radius: 0.5rem;
+    --sidebar: oklch(0.11 0.005 260);
+    --sidebar-foreground: oklch(0.95 0 0);
+    --sidebar-primary: oklch(0.7 0.18 145);
+    --sidebar-primary-foreground: oklch(0.09 0.005 260);
+    --sidebar-accent: oklch(0.18 0.005 260);
+    --sidebar-accent-foreground: oklch(0.95 0 0);
+    --sidebar-border: oklch(0.22 0.005 260);
+    --sidebar-ring: oklch(0.7 0.18 145);
+    --success: oklch(0.7 0.18 145);
+    --warning: oklch(0.75 0.18 55);
 }
 
 @layer base {
@@ -126,4 +203,91 @@
   html {
     @apply font-sans;
     }
+}
+
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
+
+/* Custom animations for GiGi - keyframes are used by Tailwind config */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(3deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(175, 255, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(175, 255, 0, 0.6);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes grain {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  10% {
+    transform: translate(-5%, -10%);
+  }
+  30% {
+    transform: translate(3%, -15%);
+  }
+  50% {
+    transform: translate(12%, 9%);
+  }
+  70% {
+    transform: translate(9%, 4%);
+  }
+  90% {
+    transform: translate(-1%, 7%);
+  }
+}
+
+/* Grain animation is not in Tailwind config, so we define it here */
+@layer utilities {
+  .animate-grain {
+    animation: grain 8s steps(10) infinite;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.noise-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  animation: grain 8s steps(10) infinite;
 }

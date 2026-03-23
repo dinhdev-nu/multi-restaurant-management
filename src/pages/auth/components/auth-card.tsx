@@ -1,0 +1,110 @@
+import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import { X } from "lucide-react"
+import { SignUpSteps } from "./sign-up-steps"
+import { SignInForm } from "./sign-in-form"
+import { useSignUp } from "../hooks/use-sign-up"
+import { useSignIn } from "../hooks/use-sign-in"
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+const TAB_ORDER = ["signup", "signin"]
+
+const tabSlideVariants = {
+  enter: (dir: number) => ({ x: dir * 60, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir * -60, opacity: 0 }),
+}
+
+export function AuthCard() {
+  const signUpHook = useSignUp({})
+  const signInHook = useSignIn()
+  const [activeTab, setActiveTab] = useState<"signup" | "signin">("signup")
+  const [tabDir, setTabDir] = useState(1)
+
+  const switchTab = (newTab: string) => {
+    const dir = TAB_ORDER.indexOf(newTab) > TAB_ORDER.indexOf(activeTab) ? 1 : -1
+    setTabDir(dir)
+    setActiveTab(newTab as "signup" | "signin")
+    if (newTab === "signup") signUpHook.reset()
+  }
+
+  return (
+    <div className="w-full max-w-md mx-auto">
+      <Card className="rounded-2xl shadow-lg border-gray-200">
+        <CardContent className="p-8">
+          <Tabs value={activeTab} onValueChange={switchTab}>
+            <div className="flex items-center justify-between mb-6">
+              <TabsList className="flex-1 mr-3 h-11">
+                <TabsTrigger value="signup" className="flex-1">Sign up</TabsTrigger>
+                <TabsTrigger value="signin" className="flex-1">Sign in</TabsTrigger>
+              </TabsList>
+              <button
+                onClick={signUpHook.onClose}
+                className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+          </Tabs>
+
+          <div className="relative overflow-hidden">
+            <AnimatePresence initial={false} custom={tabDir} mode="wait">
+              <motion.div
+                key={activeTab}
+                custom={tabDir}
+                variants={tabSlideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }}
+              >
+                {activeTab === "signup" ? (
+                  <SignUpSteps hook={signUpHook} />
+                ) : (
+                  <SignInForm hook={signInHook} />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Social divider */}
+          <div className="flex items-center my-6">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="px-3 text-gray-500 text-xs font-medium">OR</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          {/* Social buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={signInHook.handleGoogleLogin}
+              className="ring-1 ring-gray-200 rounded-lg h-11 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors text-sm text-gray-700 font-medium"
+            >
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/2048px-Google_%22G%22_logo.svg.png"
+                alt="Google"
+                className="w-4 h-4"
+              />
+              Google
+            </button>
+            <button
+              onClick={signInHook.handleAppleLogin}
+              className="ring-1 ring-gray-200 rounded-lg h-11 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors text-sm text-gray-700 font-medium"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+              </svg>
+              Apple
+            </button>
+          </div>
+
+          <p className="text-center text-gray-400 text-xs mt-5">
+            By continuing, you agree to our Terms of Service
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
