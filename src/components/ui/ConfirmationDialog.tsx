@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import Icon from '@/components/AppIcon';
-import Button from '@/pages/pos/components/Button';
+import { Button } from '@/components/ui/button';
 
 export interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -14,6 +14,24 @@ export interface ConfirmationDialogProps {
   variant?: 'default' | 'danger' | 'warning';
   icon?: string;
 }
+
+const variantStyles = {
+  danger: {
+    iconWrapper: 'bg-destructive/10',
+    iconColor: 'text-destructive',
+    confirmButton: 'destructive' as const,
+  },
+  warning: {
+    iconWrapper: 'bg-yellow-500/10',
+    iconColor: 'text-yellow-600',
+    confirmButton: 'default' as const,
+  },
+  default: {
+    iconWrapper: 'bg-primary/10',
+    iconColor: 'text-primary',
+    confirmButton: 'default' as const,
+  },
+};
 
 const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   isOpen,
@@ -28,8 +46,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const iconColor = variant === 'danger' ? 'text-red-600' : variant === 'warning' ? 'text-yellow-600' : 'text-blue-600';
-  const confirmVariant = variant === 'danger' ? 'error' : variant === 'warning' ? 'warning' : 'default';
+  const styles = variantStyles[variant];
 
   return (
     <div
@@ -38,29 +55,43 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
     >
       <div
         className={cn(
-          'bg-background rounded-lg shadow-xl max-w-md w-full',
-          'transform transition-all',
-          'animate-in fade-in-0 zoom-in-95'
+          'w-full max-w-md',
+          'bg-card border border-border rounded-xl shadow-xl',
+          'animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-300'
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
-          <div className="flex items-start space-x-4">
-            <div className={cn('flex-shrink-0 mt-0.5', iconColor)}>
-              <Icon name={icon} size={24} />
+        {/* Header */}
+        <div className="p-6 space-y-4">
+          <div className="flex items-start gap-4">
+            {/* Icon badge */}
+            <div
+              className={cn(
+                'flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center',
+                styles.iconWrapper
+              )}
+            >
+              <Icon name={icon} size={22} className={styles.iconColor} />
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
-              <p className="text-sm text-muted-foreground">{message}</p>
+
+            {/* Title + message */}
+            <div className="flex-1 min-w-0 pt-0.5">
+              <h3 className="text-base font-semibold text-foreground leading-snug">
+                {title}
+              </h3>
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+                {message}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-border p-4 flex items-center justify-end space-x-2">
-          <Button variant="outline" size="default" onClick={onClose}>
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border bg-secondary/30 rounded-b-xl">
+          <Button variant="outline" size="sm" onClick={onClose}>
             {cancelText}
           </Button>
-          <Button variant={confirmVariant} size="default" onClick={onConfirm}>
+          <Button variant={styles.confirmButton} size="sm" onClick={onConfirm}>
             {confirmText}
           </Button>
         </div>
