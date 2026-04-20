@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react';
+import { type ChangeEvent, useMemo } from 'react';
 import Button from '../../../components/Button.tsx';
 import Icon from '@/components/AppIcon';
 import Input from '../../../components/Input.tsx';
@@ -63,14 +63,19 @@ const OrderCart = ({
   discountType = 'percent',
   discountValue = 0,
 }: OrderCartProps) => {
-  const subtotal = cartItems?.reduce((total, item) => total + item.price * item.quantity, 0) ?? 0;
-
-  const discount = discountType === 'percent'
-    ? subtotal * (discountValue / 100)
-    : Math.min(discountValue, subtotal);
-
-  const tax = (subtotal - discount) * 0.1;
-  const finalTotal = subtotal - discount + tax;
+  const { subtotal, discount, tax, finalTotal } = useMemo(() => {
+    const st = cartItems?.reduce((total, item) => total + item.price * item.quantity, 0) ?? 0;
+    const disc = discountType === 'percent'
+      ? st * (discountValue / 100)
+      : Math.min(discountValue, st);
+    const tx = (st - disc) * 0.1;
+    return {
+      subtotal: st,
+      discount: disc,
+      tax: tx,
+      finalTotal: st - disc + tx
+    };
+  }, [cartItems, discountType, discountValue]);
 
   if (cartItems?.length === 0) {
     return (

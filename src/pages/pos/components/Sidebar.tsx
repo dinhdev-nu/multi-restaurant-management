@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: 'Bán hàng',
     section: 'main-pos',
-    icon: 'CashRegister',
+    icon: 'Monitor',
     roles: ['staff', 'manager', 'owner'],
     description: 'Giao diện bán hàng chính',
   },
@@ -92,8 +92,8 @@ const NavButton = memo<NavButtonProps>(({ item, isCollapsed, isActive, onSelect,
     }}
     className={
       [
-        'flex items-center w-full rounded-md touch-target hover-scale transition-smooth',
-        isCollapsed ? 'px-2 justify-center' : 'px-4 justify-start',
+        'flex items-center w-full rounded-md justify-center touch-target hover-scale transition-smooth',
+        isCollapsed ? 'w-10 h-10 p-0' : 'px-4',
         isActive
           ? 'bg-primary text-primary-foreground'
           : 'hover:bg-muted text-foreground',

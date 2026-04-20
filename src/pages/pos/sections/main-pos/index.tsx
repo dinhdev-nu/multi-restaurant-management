@@ -7,144 +7,45 @@ import RecentOrders from './components/RecentOrders';
 import Button from '../../components/Button';
 import Icon from '@/components/AppIcon';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface CartItem {
-  _id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  status: string;
-  note: string;
-}
-
-interface OrderSummary {
-  subtotal: number;
-  discount: number;
-  tax: number;
-  total: number;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  icon?: string;
-}
-
-type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
-type PaymentStatus = 'paid' | 'unpaid';
-
-interface MenuItem {
-  _id: string;
-  name: string;
-  price: number;
-  image?: string;
-  description?: string;
-  stock_quantity?: number;
-  status?: 'available' | 'unavailable';
-  icon?: string;
-}
-
-interface OrderItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  _id: string;
-  orderNumber?: string;
-  status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  table?: string;
-  staff?: string;
-  items?: OrderItem[];
-  total?: number;
-  subtotal?: number;
-  discount?: number;
-  tax?: number;
-  createdAt?: string;
-  expiredAt?: string;
-  customer?: { name: string; contact?: string };
-}
-
-interface DraftCustomerInfo {
-  name: string;
-}
-
-interface MainPOSDashboardProps {
-  // Menu
-  categories?: Category[];
-  menuItems?: MenuItem[];
-  // Cart
-  cartItems?: CartItem[];
-  orderNumber?: string | null;
-  orderSummary?: OrderSummary;
-  selectedTable?: string | null;
-  selectedStaff?: string | null;
-  draftOrderId?: string | null;
-  draftCustomerInfo?: DraftCustomerInfo | null;
-  isCreatingOrder?: boolean;
-  // Draft orders panel
-  customerOrders?: Order[];
-  // Callbacks – handlers do parent/container cung cấp
-  onAddToCart?: (item: MenuItem) => void;
-  onUpdateQuantity?: (id: string, qty: number) => void;
-  onRemoveItem?: (id: string) => void;
-  onUpdateNote?: (id: string, note: string) => void;
-  onClearCart?: () => void;
-  onCreateOrder?: () => void;
-  onGoToPayment?: () => void;
-  onTableChange?: (table: string | null) => void;
-  onStaffChange?: (staff: string | null) => void;
-  onSummaryChange?: (summary: OrderSummary) => void;
-  onBarcodeSearch?: (barcode: string) => void;
-  onCustomerSearch?: (query: string) => void;
-  onConfirmOrder?: (order: Order) => void;
-  onReorderDraft?: (order: Order) => void;
-}
+import { usePOSStore } from '../../store/usePOSStore';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const MainPOSDashboard: React.FC<MainPOSDashboardProps> = ({
-  categories = [],
-  menuItems = [],
-  cartItems = [],
-  orderNumber = null,
-  orderSummary = { subtotal: 0, discount: 0, tax: 0, total: 0 },
-  selectedTable = null,
-  selectedStaff = null,
-  draftOrderId = null,
-  draftCustomerInfo = null,
-  isCreatingOrder = false,
-  customerOrders = [],
-  onAddToCart,
-  onUpdateQuantity,
-  onRemoveItem,
-  onUpdateNote,
-  onClearCart,
-  onCreateOrder,
-  onGoToPayment,
-  onTableChange,
-  onStaffChange,
-  onSummaryChange,
-  onBarcodeSearch,
-  onCustomerSearch,
-  onConfirmOrder,
-  onReorderDraft,
-}) => {
+const MainPOSDashboard: React.FC = () => {
+  const categories = usePOSStore(state => state.categories);
+  const menuItems = usePOSStore(state => state.menuItems);
+  const cartItems = usePOSStore(state => state.cartItems);
+  const orderNumber = usePOSStore(state => state.orderNumber);
+  const selectedTable = usePOSStore(state => state.selectedTable);
+  const selectedStaff = usePOSStore(state => state.selectedStaff);
+  const draftOrderId = usePOSStore(state => state.draftOrderId);
+  const draftCustomerInfo = usePOSStore(state => state.draftCustomerInfo);
+  const isCreatingOrder = usePOSStore(state => state.isCreatingOrder);
+  const customerOrders = usePOSStore(state => state.customerOrders);
+
+  const handleAddToCart = usePOSStore(state => state.addToCart);
+  const handleUpdateQuantity = usePOSStore(state => state.updateQuantity);
+  const handleRemoveItem = usePOSStore(state => state.removeItem);
+  const handleUpdateNote = usePOSStore(state => state.updateNote);
+  const onClearCart = usePOSStore(state => state.clearCart);
+  const onTableChange = usePOSStore(state => state.setSelectedTable);
+  const onStaffChange = usePOSStore(state => state.setSelectedStaff);
+
+  // Stubs for functionality not fully implemented
+  const onSummaryChange = () => {};
+  const onCreateOrder = () => {};
+  const onGoToPayment = () => {};
+  const handleBarcodeSearch = () => {};
+  const handleCustomerSearch = () => {};
+  const onConfirmOrder = () => {};
+  const onReorderDraft = () => {};
+
+  // Redundant locally calculated dependency for format
+  const orderSummary = { total: 0 };
   const [showRecentOrders, setShowRecentOrders]       = useState(false);
   const [activeCategory, setActiveCategory]           = useState('all');
   const [showMobileCart, setShowMobileCart]           = useState(false);
   const [showClearCartDialog, setShowClearCartDialog] = useState(false);
-
-  const handleBarcodeSearch = onBarcodeSearch ?? (() => {});
-  const handleCustomerSearch = onCustomerSearch ?? (() => {});
-  const handleAddToCart = onAddToCart ?? (() => {});
-  const handleUpdateQuantity = onUpdateQuantity ?? (() => {});
-  const handleRemoveItem = onRemoveItem ?? (() => {});
-  const handleUpdateNote = onUpdateNote ?? (() => {});
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 

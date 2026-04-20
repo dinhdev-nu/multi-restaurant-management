@@ -1,0 +1,6 @@
+export { default as LandingFooter } from "./LandingFooter"
+export { default as LandingGlobalStyles } from "./LandingGlobalStyles"
+export { default as LandingHeader } from "./LandingHeader"
+export { default as LandingMain } from "./LandingMain"
+export { default as LandingNewsletter } from "./LandingNewsletter"
+export { default as LandingSection } from "./LandingSection"

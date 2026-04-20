@@ -57,6 +57,31 @@ const formatDate = (d: Date) => {
   })}`;
 };
 
+// ─── Component Phụ ─────────────────────────────────────────────────────────────
+
+const Clock = memo(() => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div className="hidden xl:flex items-center space-x-2 px-4 py-2">
+      <Icon name="Clock" size={16} className="text-primary" />
+      <div className="flex flex-col">
+        <span className="text-sm font-semibold text-foreground font-mono tracking-wider">
+          {formatTime(currentTime)}
+        </span>
+        <span className="text-xs text-muted-foreground">{formatDate(currentTime)}</span>
+      </div>
+    </div>
+  );
+});
+
+Clock.displayName = 'Clock';
+
 // ─── Header ───────────────────────────────────────────────────────────────────
 // memo: chỉ re-render khi props thực sự thay đổi.
 
@@ -71,13 +96,6 @@ const Header = memo<HeaderProps>(({
 }) => {
   const [showNotifications, setShowNotif]     = useState(false);
   const [showQRDialog, setShowQRDialog]       = useState(false);
-  const [currentTime, setCurrentTime]         = useState(new Date());
-
-  // Clock (re-render 1 giây/lần – độc lập với routing)
-  useEffect(() => {
-    const t = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   const displayName = restaurant?.name ?? storeName;
   const logoSrc = restaurant?.logo ?? '/assets/images/restaurant_logo.png';
@@ -139,15 +157,7 @@ const Header = memo<HeaderProps>(({
         {/* ── Right ─────────────────────────────────────────────────────── */}
         <div className="flex items-center space-x-1 sm:space-x-3">
           {/* Clock */}
-          <div className="hidden xl:flex items-center space-x-2 px-4 py-2">
-            <Icon name="Clock" size={16} className="text-primary" />
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground font-mono tracking-wider">
-                {formatTime(currentTime)}
-              </span>
-              <span className="text-xs text-muted-foreground">{formatDate(currentTime)}</span>
-            </div>
-          </div>
+          <Clock />
 
           {/* Operational toggle (POS desktop) */}
           <div className="hidden lg:flex items-center space-x-2">

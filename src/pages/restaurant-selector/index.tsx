@@ -166,9 +166,8 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({
 
       {/* Hover arrow */}
       <div
-        className={`absolute bottom-2 right-2 w-6 h-6 bg-background rounded-full flex items-center justify-center transition-all duration-200 ${
-          isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
-        }`}
+        className={`absolute bottom-2 right-2 w-6 h-6 bg-background rounded-full flex items-center justify-center transition-all duration-200 ${isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
+          }`}
       >
         <ChevronRight className="w-4 h-4 text-foreground" />
       </div>
@@ -211,7 +210,7 @@ const RestaurantSelector: React.FC = () => {
   };
 
   const handleCreateRestaurant = (): void => {
-    navigate('/new');
+    navigate('/restaurants/new');
   };
 
   const handleGoPOS = (restaurant: Restaurant): void => {
@@ -231,62 +230,62 @@ const RestaurantSelector: React.FC = () => {
           <p className="text-sm text-gray-600">Chọn nhà hàng bạn muốn quản lý</p>
         </div>
 
-          {/* Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {/* Create new button */}
-            <button
-              onClick={handleCreateRestaurant}
-              onMouseEnter={() => setHoveredCard('new')}
-              onMouseLeave={() => setHoveredCard(null)}
-              className="group relative bg-card border-2 border-dashed border-border rounded-xl p-4 hover:border-foreground/30 hover:bg-accent/30 transition-all duration-200 min-h-[160px] flex flex-col items-center justify-center"
-            >
-              <div className="w-12 h-12 rounded-full bg-muted group-hover:bg-muted/70 flex items-center justify-center mb-3 transition-colors">
-                <Plus className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground mb-0.5">Tạo mới</h3>
-              <p className="text-xs text-muted-foreground text-center">Nhà hàng của bạn</p>
-            </button>
+        {/* Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {/* Create new button */}
+          <button
+            onClick={handleCreateRestaurant}
+            onMouseEnter={() => setHoveredCard('new')}
+            onMouseLeave={() => setHoveredCard(null)}
+            className="group relative bg-card border-2 border-dashed border-border rounded-xl p-4 hover:border-foreground/30 hover:bg-accent/30 transition-all duration-200 min-h-[160px] flex flex-col items-center justify-center"
+          >
+            <div className="w-12 h-12 rounded-full bg-muted group-hover:bg-muted/70 flex items-center justify-center mb-3 transition-colors">
+              <Plus className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-sm font-semibold text-foreground mb-0.5">Tạo mới</h3>
+            <p className="text-xs text-muted-foreground text-center">Nhà hàng của bạn</p>
+          </button>
 
-            {/* Skeletons */}
-            {isLoading &&
-              [...Array(6)].map((_, i) => <SkeletonCard key={`skeleton-${i}`} />)}
+          {/* Skeletons */}
+          {isLoading &&
+            [...Array(6)].map((_, i) => <SkeletonCard key={`skeleton-${i}`} />)}
 
-            {/* Restaurant cards */}
-            {!isLoading &&
-              restaurants.map((restaurant) => (
-                <React.Fragment key={restaurant._id}>
-                  {/* Management card */}
-                  <RestaurantCard
-                    restaurant={restaurant}
-                    isHovered={hoveredCard === restaurant._id}
-                    isSelecting={selectingId === restaurant._id}
-                    isDisabled={!!selectingId}
-                    onMouseEnter={() => setHoveredCard(restaurant._id)}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    onClick={() => handleRestaurantSelect(restaurant)}
-                    badgeLabel={restaurant.role ?? 'Chủ nhà hàng'}
-                    badgePOS={false}
-                  />
+          {/* Restaurant cards */}
+          {!isLoading &&
+            restaurants.map((restaurant) => (
+              <React.Fragment key={restaurant._id}>
+                {/* Management card */}
+                <RestaurantCard
+                  restaurant={restaurant}
+                  isHovered={hoveredCard === restaurant._id}
+                  isSelecting={selectingId === restaurant._id}
+                  isDisabled={!!selectingId}
+                  onMouseEnter={() => setHoveredCard(restaurant._id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  onClick={() => handleRestaurantSelect(restaurant)}
+                  badgeLabel={restaurant.role ?? 'Chủ nhà hàng'}
+                  badgePOS={false}
+                />
 
-                  {/* POS card */}
-                  <RestaurantCard
-                    restaurant={restaurant}
-                    isHovered={hoveredCard === `${restaurant._id}-pos`}
-                    isSelecting={selectingId === `${restaurant._id}-pos`}
-                    isDisabled={!!selectingId}
-                    onMouseEnter={() => setHoveredCard(`${restaurant._id}-pos`)}
-                    onMouseLeave={() => setHoveredCard(null)}
-                    onClick={() => handleGoPOS(restaurant)}
-                    badgeLabel="POS"
-                    badgePOS={true}
-                    subLabel="Chế độ bán hàng"
-                    imageOpacity="opacity-60"
-                  />
-                </React.Fragment>
-              ))}
-          </div>
+                {/* POS card */}
+                <RestaurantCard
+                  restaurant={restaurant}
+                  isHovered={hoveredCard === `${restaurant._id}-pos`}
+                  isSelecting={selectingId === `${restaurant._id}-pos`}
+                  isDisabled={!!selectingId}
+                  onMouseEnter={() => setHoveredCard(`${restaurant._id}-pos`)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  onClick={() => handleGoPOS(restaurant)}
+                  badgeLabel="POS"
+                  badgePOS={true}
+                  subLabel="Chế độ bán hàng"
+                  imageOpacity="opacity-60"
+                />
+              </React.Fragment>
+            ))}
         </div>
       </div>
+    </div>
   );
 };
 

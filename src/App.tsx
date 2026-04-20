@@ -1,28 +1,30 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
-import Home from "@/pages/home"
-import AuthPage from "@/pages/auth"
-import ProfilePage from "@/pages/profile"
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import NotFoundPage from "@/pages/not-found"
 import OAuthCallbackPage from "@/pages/oauth-callback"
-import CreateRestaurantPage from "@/pages/new"
+import { NewRestaurantRoute } from "@/routes/new-restaurant-route"
 import RestaurantSelectorPage from "@/pages/restaurant-selector"
 import Dashboard from "@/pages/dashboard"
 import POS from "@/pages/pos/POS"
 import { Toaster } from "@/components/ui/sonner"
 import CustomerOrdering from "./pages/customer-ordering"
+import { HomeRoutes } from "@/routes/home-routes"
+import { SETTINGS_DEFAULT_PATH } from "@/routes/setting-route-config"
+import { SettingRoutes } from "@/routes/setting-routes"
+import { AuthRoutes } from "@/routes/auth-routes"
 
 export function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/auths" element={<AuthPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        {HomeRoutes()}
+        {AuthRoutes()}
+        {SettingRoutes()}
+        <Route path="/profile/*" element={<Navigate to={SETTINGS_DEFAULT_PATH} replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/pos" element={<POS />} />
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-        <Route path="/new" element={<CreateRestaurantPage />} />
-        <Route path="/restaurant-selector" element={<RestaurantSelectorPage />} />
+        {NewRestaurantRoute()}
+        <Route path="/restaurants" element={<RestaurantSelectorPage />} />
         <Route path="/customer-ordering/*" element={<CustomerOrdering />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

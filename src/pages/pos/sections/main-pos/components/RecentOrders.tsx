@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Button from '../../../components/Button.tsx';
 import Icon from '@/components/AppIcon';
 
@@ -97,8 +97,11 @@ interface SummaryStripProps {
 }
 
 const SummaryStrip = ({ orders }: SummaryStripProps) => {
-  const revenue = orders.reduce((s, o) => s + (o.total ?? 0), 0);
-  const avgTotal = orders.length ? Math.round(revenue / orders.length) : 0;
+  const { revenue, avgTotal } = useMemo(() => {
+    const rev = orders.reduce((s, o) => s + (o.total ?? 0), 0);
+    const avg = orders.length ? Math.round(rev / orders.length) : 0;
+    return { revenue: rev, avgTotal: avg };
+  }, [orders]);
 
   return (
     <div className="grid grid-cols-3 gap-2">
@@ -312,18 +315,21 @@ interface RecentOrdersProps {
 const RecentOrders = ({ onClose, onConfirmOrder, onReorderDraft, orders = [] }: RecentOrdersProps) => {
   const [activeFilter, setActiveFilter] = useState('all');
 
-  const validOrders = orders.filter((o) => !isOrderExpired(o));
+  const sortedOrders = useMemo(() => {
+    const validOrders = orders.filter((o) => !isOrderExpired(o));
+    return [...validOrders].sort((a, b) => {
+      const aExp = a.expiredAt ? new Date(a.expiredAt).getTime() : Infinity;
+      const bExp = b.expiredAt ? new Date(b.expiredAt).getTime() : Infinity;
+      if (aExp !== bExp) return aExp - bExp;
+      return new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime();
+    });
+  }, [orders]);
 
-  const sortedOrders = [...validOrders].sort((a, b) => {
-    const aExp = a.expiredAt ? new Date(a.expiredAt).getTime() : Infinity;
-    const bExp = b.expiredAt ? new Date(b.expiredAt).getTime() : Infinity;
-    if (aExp !== bExp) return aExp - bExp;
-    return new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime();
-  });
-
-  const filtered = activeFilter === 'all'
-    ? sortedOrders
-    : sortedOrders.filter((o) => o.status === activeFilter);
+  const filtered = useMemo(() => {
+    return activeFilter === 'all'
+      ? sortedOrders
+      : sortedOrders.filter((o) => o.status === activeFilter);
+  }, [sortedOrders, activeFilter]);
 
   return (
     <div className="flex flex-col h-full">

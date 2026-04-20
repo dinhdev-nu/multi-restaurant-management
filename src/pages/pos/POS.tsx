@@ -2,7 +2,7 @@ import React from 'react';
 import Layout from './index';
 import MainPOSDashboard from './sections/main-pos';
 
-type POSSection = 'main-pos' | 'table' | 'payment' | 'order' | 'menu' | 'staff';
+import { usePOSStore, type POSSection } from './store/usePOSStore';
 
 // Demo data for testing
 const demoRestaurant = {
@@ -21,21 +21,31 @@ const demoNotifications = [
   },
 ];
 
-const POS: React.FC = () => {
-  const [isOperational, setIsOperational] = React.useState(true);
-  const [activeSection, setActiveSection] = React.useState<POSSection>('main-pos');
+const getRelativeTime = (date: Date | string) => {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (seconds < 60) return `${seconds} giây trước`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} phút trước`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} giờ trước`;
+  const days = Math.floor(hours / 24);
+  return `${days} ngày trước`;
+};
 
-  const getRelativeTime = (date: Date | string) => {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
-    if (seconds < 60) return `${seconds} giây trước`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} phút trước`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} giờ trước`;
-    const days = Math.floor(hours / 24);
-    return `${days} ngày trước`;
-  };
+const POS: React.FC = () => {
+  const isOperational = usePOSStore(state => state.isOperational);
+  const activeSection = usePOSStore(state => state.activeSection);
+  const toggleOperational = usePOSStore(state => state.toggleOperational);
+  const setActiveSection = usePOSStore(state => state.setActiveSection);
+
+  const handleToggleOperational = React.useCallback(() => {
+    toggleOperational();
+  }, [toggleOperational]);
+
+  const handleSectionChange = React.useCallback((section: string) => {
+    setActiveSection(section as POSSection);
+  }, [setActiveSection]);
 
   const renderSectionContent = () => {
     switch (activeSection) {
@@ -62,10 +72,10 @@ const POS: React.FC = () => {
       restaurant={demoRestaurant}
       notifications={demoNotifications}
       isOperational={isOperational}
-      onToggleOperational={() => setIsOperational(!isOperational)}
+      onToggleOperational={handleToggleOperational}
       getRelativeTime={getRelativeTime}
       activeSection={activeSection}
-      onSectionChange={(section) => setActiveSection(section as POSSection)}
+      onSectionChange={handleSectionChange}
     >
       {renderSectionContent()}
     </Layout>
