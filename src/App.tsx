@@ -2,9 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import NotFoundPage from "@/pages/not-found"
 import OAuthCallbackPage from "@/pages/oauth-callback"
 import { NewRestaurantRoute } from "@/routes/new-restaurant-route"
+import { PosRoute } from "@/routes/pos-route"
 import RestaurantSelectorPage from "@/pages/restaurant-selector"
 import Dashboard from "@/pages/dashboard"
-import POS from "@/pages/pos/POS"
 import { Toaster } from "@/components/ui/sonner"
 import CustomerOrdering from "./pages/customer-ordering"
 import { HomeRoutes } from "@/routes/home-routes"
@@ -21,7 +21,7 @@ export function App() {
         {SettingRoutes()}
         <Route path="/profile/*" element={<Navigate to={SETTINGS_DEFAULT_PATH} replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/pos" element={<POS />} />
+        {PosRoute()}
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         {NewRestaurantRoute()}
         <Route path="/restaurants" element={<RestaurantSelectorPage />} />
