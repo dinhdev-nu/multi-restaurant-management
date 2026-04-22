@@ -1,8 +1,8 @@
-import { MetricCard } from "../metric-card";
-import { RevenueChart } from "../charts/revenue-chart";
-import { PipelineOverview } from "../charts/pipeline-overview";
-import { RecentDeals } from "../recent-deals";
-import { TopPerformers } from "../top-performers";
+import { MetricCard } from "../components/MetricCard";
+import { RevenueChart } from "../components/charts/RevenueChart";
+import { PipelineOverview } from "../components/charts/PipelineOverview";
+import { RecentDeals } from "../components/RecentDeals";
+import { TopPerformers } from "../components/TopPerformers";
 import { DollarSign, TrendingUp, Users, Target } from "lucide-react";
 
 export function OverviewSection() {

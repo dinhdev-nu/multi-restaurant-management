@@ -6,7 +6,7 @@ import { PublicOrderingRoute } from "@/routes/public-ordering-route"
 import { PosRoute } from "@/routes/pos-route"
 import { PublicRestaurantsRoute } from "@/routes/public-restaurants-route"
 import RestaurantSelectorPage from "@/pages/restaurant-selector"
-import Dashboard from "@/pages/dashboard/DashboardPage"
+import { DashboardRoute } from "@/routes/dashboard-route"
 import { Toaster } from "@/components/ui/sonner"
 import { HomeRoutes } from "@/routes/home-routes"
 import { SETTINGS_DEFAULT_PATH } from "@/routes/setting-route-config"
@@ -22,7 +22,7 @@ export function App() {
         {AuthRoutes()}
         {SettingRoutes()}
         <Route path="/profile/*" element={<Navigate to={SETTINGS_DEFAULT_PATH} replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        {DashboardRoute()}
         {PosRoute()}
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         {NewRestaurantRoute()}

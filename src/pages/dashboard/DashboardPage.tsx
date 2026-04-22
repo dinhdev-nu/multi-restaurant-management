@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
-import "./analysis-reporting.css";
-import { Sidebar } from "./dashboard/sidebar";
-import { Header } from "./dashboard/header";
-import { OverviewSection } from "./dashboard/sections/overview";
-import { PipelineSection } from "./dashboard/sections/pipeline";
-import { DealsSection } from "./dashboard/sections/deals";
-import { CustomersSection } from "./dashboard/sections/customers";
-import { TeamSection } from "./dashboard/sections/team";
-import { ForecastingSection } from "./dashboard/sections/forecasting";
-import { ReportsSection } from "./dashboard/sections/reports";
-import { SettingsSection } from "./dashboard/sections/settings";
+import { useEffect, useState, type ReactNode } from "react";
+import "@/features/dashboard/analysis-reporting.css";
+import {
+    CustomersSection,
+    DealsSection,
+    ForecastingSection,
+    Header,
+    OverviewSection,
+    PipelineSection,
+    ReportsSection,
+    SettingsSection,
+    Sidebar,
+    TeamSection,
+} from "../../features/dashboard";
+import { DashboardLayout } from "../../layouts/dashboard/DashboardLayout";
 
 type SectionId =
     | "overview"
@@ -23,7 +26,7 @@ type SectionId =
 
 type ThemeMode = "light" | "dark";
 
-const sectionMap: Record<SectionId, React.ReactNode> = {
+const sectionMap: Record<SectionId, ReactNode> = {
     overview: <OverviewSection />,
     pipeline: <PipelineSection />,
     deals: <DealsSection />,
@@ -52,29 +55,25 @@ export default function Dashboard() {
     };
 
     return (
-        <div className={`analysis-reporting ${theme} min-h-screen bg-background overflow-hidden`}>
-            <Sidebar
-                activeSection={activeSection}
-                onSectionChange={setActiveSection}
-                collapsed={sidebarCollapsed}
-                onCollapsedChange={setSidebarCollapsed}
-                theme={theme}
-                onThemeToggle={toggleTheme}
-            />
+        <DashboardLayout
+            theme={theme}
+            sidebar={
+                <Sidebar
+                    activeSection={activeSection}
+                    onSectionChange={setActiveSection}
+                    collapsed={sidebarCollapsed}
+                    onCollapsedChange={setSidebarCollapsed}
+                />
+            }
+            header={<Header activeSection={activeSection} theme={theme} onThemeToggle={toggleTheme} />}
+            sidebarCollapsed={sidebarCollapsed}
+        >
             <div
-                className={`flex flex-col h-screen transition-all duration-300 ease-out ${sidebarCollapsed ? "ml-[72px]" : "ml-[260px]"
-                    }`}
+                key={activeSection}
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500"
             >
-                <Header activeSection={activeSection} theme={theme} onThemeToggle={toggleTheme} />
-                <main className="flex-1 p-6 overflow-auto">
-                    <div
-                        key={activeSection}
-                        className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-                    >
-                        {sectionMap[activeSection]}
-                    </div>
-                </main>
+                {sectionMap[activeSection]}
             </div>
-        </div>
+        </DashboardLayout>
     );
 }

@@ -15,8 +15,8 @@ import {
 import { cuisineTypes, weekDays, serviceOptions, paymentOptions } from '../../../constants/restaurant.const'
 import { MOCK_PROVINCES, MOCK_DISTRICTS } from '../../../mocks/locations';
 import TimePicker from '../../../components/ui/TimePicker';
-import Input from '../../../components/ui/Input';
-import { Label } from "../../../components/ui/Label";
+import Input from '../../../../components/ui/Input';
+import { Label } from "../../../../components/ui/Label";
 import { createRestaurantApi, updateRestaurantApi } from 'api/restaurant';
 import { useRestaurantStore } from '../../../stores/restaurant.store';
 import { useToast } from 'hooks/use-toast';

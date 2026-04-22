@@ -1,4 +1,4 @@
-import { cn } from "../../../lib/utils";
+import { cn } from "@/lib/utils";
 import { ArrowUpRight, Clock, CheckCircle2, XCircle, type LucideIcon } from "lucide-react";
 
 type DealStatus = "won" | "pending" | "lost";
