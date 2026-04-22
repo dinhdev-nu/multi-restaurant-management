@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Button from '../../../components/Button';
 import Icon from '@/components/AppIcon';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 
-type OrderStatus   = 'completed' | 'processing' | 'pending' | 'cancelled' | 'refunded';
+type OrderStatus = 'completed' | 'processing' | 'pending' | 'cancelled' | 'refunded';
 type PaymentStatus = 'paid' | 'unpaid' | 'refunded';
 
 interface OrderItem {
@@ -52,17 +52,17 @@ const formatDateTime = (timestamp: string): string =>
 // ── Badge components ───────────────────────────────────────────────────────────
 
 const ORDER_STATUS_CONFIG: Record<OrderStatus, { color: string; label: string }> = {
-  completed:  { color: 'bg-success text-success-foreground',     label: 'Hoàn thành'   },
-  processing: { color: 'bg-warning text-warning-foreground',     label: 'Đang xử lý'  },
-  pending:    { color: 'bg-blue-500 text-white',                 label: 'Chờ xử lý'   },
-  cancelled:  { color: 'bg-error text-error-foreground',         label: 'Đã hủy'      },
-  refunded:   { color: 'bg-secondary text-secondary-foreground', label: 'Đã hoàn tiền'},
+  completed: { color: 'bg-success text-success-foreground', label: 'Hoàn thành' },
+  processing: { color: 'bg-warning text-warning-foreground', label: 'Đang xử lý' },
+  pending: { color: 'bg-blue-500 text-white', label: 'Chờ xử lý' },
+  cancelled: { color: 'bg-error text-error-foreground', label: 'Đã hủy' },
+  refunded: { color: 'bg-secondary text-secondary-foreground', label: 'Đã hoàn tiền' },
 };
 
 const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { color: string; label: string; icon: string }> = {
-  paid:     { color: 'bg-success text-success-foreground',     label: 'Đã thanh toán',   icon: 'CheckCircle' },
-  unpaid:   { color: 'bg-orange-500 text-white',               label: 'Chưa thanh toán', icon: 'AlertCircle' },
-  refunded: { color: 'bg-secondary text-secondary-foreground', label: 'Đã hoàn tiền',   icon: 'RotateCcw'   },
+  paid: { color: 'bg-success text-success-foreground', label: 'Đã thanh toán', icon: 'CheckCircle' },
+  unpaid: { color: 'bg-orange-500 text-white', label: 'Chưa thanh toán', icon: 'AlertCircle' },
+  refunded: { color: 'bg-secondary text-secondary-foreground', label: 'Đã hoàn tiền', icon: 'RotateCcw' },
 };
 
 const StatusBadge: React.FC<{ status: OrderStatus }> = ({ status }) => {
@@ -111,17 +111,23 @@ const OrderTable: React.FC<OrderTableProps> = ({
   onReprintReceipt,
   onPayOrder,
 }) => {
-  const [expandedRows, setExpandedRows]   = useState<Set<string>>(new Set());
-  const [sortConfig, setSortConfig]       = useState<SortConfig>({ key: 'timestamp', direction: 'desc' });
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'timestamp', direction: 'desc' });
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const toggleRowExpansion = (orderId: string) => {
-    const next = new Set(expandedRows);
-    next.has(orderId) ? next.delete(orderId) : next.add(orderId);
-    setExpandedRows(next);
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
   };
 
   const handleSort = (key: SortKey) => {
@@ -153,16 +159,20 @@ const OrderTable: React.FC<OrderTableProps> = ({
 
   // ── Sorted data ────────────────────────────────────────────────────────────
 
-  const sortedOrders = [...orders].sort((a, b) => {
-    if (sortConfig.key === 'timestamp') {
-      const diff = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-      return sortConfig.direction === 'asc' ? diff : -diff;
-    }
-    if (sortConfig.key === 'total') {
-      return sortConfig.direction === 'asc' ? a.total - b.total : b.total - a.total;
-    }
-    return 0;
-  });
+  const sortedOrders = useMemo(
+    () =>
+      [...orders].sort((a, b) => {
+        if (sortConfig.key === 'timestamp') {
+          const diff = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+          return sortConfig.direction === 'asc' ? diff : -diff;
+        }
+        if (sortConfig.key === 'total') {
+          return sortConfig.direction === 'asc' ? a.total - b.total : b.total - a.total;
+        }
+        return 0;
+      }),
+    [orders, sortConfig]
+  );
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -211,9 +221,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
           <tbody>
             {sortedOrders.map((order) => (
               <React.Fragment key={order._id}>
-                <tr className={`border-b border-border hover:bg-muted/30 transition-smooth ${
-                  highlightedOrderId === order._id ? 'bg-primary/10 animate-pulse' : ''
-                }`}>
+                <tr className={`border-b border-border hover:bg-muted/30 transition-smooth ${highlightedOrderId === order._id ? 'bg-primary/10 animate-pulse' : ''
+                  }`}>
                   <td className="p-4">
                     <div className="flex items-center space-x-2">
                       <Button
@@ -419,9 +428,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
         {sortedOrders.map((order) => (
           <div
             key={order._id}
-            className={`border border-border rounded-lg p-4 space-y-3 ${
-              highlightedOrderId === order._id ? 'bg-primary/10 border-primary animate-pulse' : ''
-            }`}
+            className={`border border-border rounded-lg p-4 space-y-3 ${highlightedOrderId === order._id ? 'bg-primary/10 border-primary animate-pulse' : ''
+              }`}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 flex-wrap gap-2">

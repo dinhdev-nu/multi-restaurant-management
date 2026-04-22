@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
+import { cn } from '@/lib/utils';
 import Button from '../../../components/Button';
 import type { Staff } from './StaffCard';
 
@@ -25,26 +26,26 @@ interface StaffTableProps {
 
 // ── Style maps ────────────────────────────────────────────────────────────────
 
-const STATUS_COLOR: Record<string, string> = {
-  'active':   'text-success',
+const STATUS_COLOR: Record<Staff['status'], string> = {
+  'active': 'text-success',
   'on-break': 'text-warning',
   'inactive': 'text-error',
 };
 
-const STATUS_BG: Record<string, string> = {
-  'active':   'bg-success/10',
+const STATUS_BG: Record<Staff['status'], string> = {
+  'active': 'bg-success/10',
   'on-break': 'bg-warning/10',
   'inactive': 'bg-error/10',
 };
 
-const STATUS_DOT: Record<string, string> = {
-  'active':   'bg-success',
+const STATUS_DOT: Record<Staff['status'], string> = {
+  'active': 'bg-success',
   'on-break': 'bg-warning',
   'inactive': 'bg-error',
 };
 
 const ROLE_COLOR: Record<string, string> = {
-  owner:   'bg-primary text-primary-foreground',
+  owner: 'bg-primary text-primary-foreground',
   manager: 'bg-accent text-accent-foreground',
   cashier: 'bg-secondary text-secondary-foreground',
   kitchen: 'bg-success text-success-foreground',
@@ -69,7 +70,7 @@ const StaffTable = memo<StaffTableProps>(({
 }) => (
   <div className="bg-card border border-border rounded-lg overflow-hidden">
     {/* Mobile warning */}
-    <div className="md:hidden bg-warning/10 border-b border-warning/20 p-3 flex items-center space-x-2">
+    <div className="md:hidden flex items-center gap-2 border-b border-warning/20 bg-warning/10 p-3">
       <Icon name="Info" size={16} className="text-warning" />
       <p className="text-sm text-warning">Cuộn sang ngang để xem đầy đủ thông tin</p>
     </div>
@@ -102,9 +103,10 @@ const StaffTable = memo<StaffTableProps>(({
             return (
               <tr
                 key={member._id}
-                className={`border-b border-border hover:bg-muted/20 transition-colors duration-200 ${
+                className={cn(
+                  'border-b border-border transition-colors duration-200 hover:bg-muted/20',
                   index % 2 === 0 ? 'bg-background' : 'bg-muted/5'
-                }`}
+                )}
               >
                 <td className="p-4">
                   <input
@@ -116,39 +118,39 @@ const StaffTable = memo<StaffTableProps>(({
                 </td>
 
                 <td className="p-4">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-muted">
-                        <Image src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                      <div className="size-10 rounded-full overflow-hidden bg-muted">
+                        <Image src={member.avatar ?? ''} alt={member.name} className="w-full h-full object-cover" />
                       </div>
-                      <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-card ${STATUS_DOT[member.status] ?? 'bg-error'}`} />
+                      <div className={cn('absolute -bottom-0.5 -right-0.5 size-3 rounded-full border border-card', STATUS_DOT[member.status])} />
                     </div>
                     <div>
                       <p className="font-medium text-card-foreground">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{(member as any).employeeId}</p>
+                      <p className="text-sm text-muted-foreground">{member.employeeId}</p>
                     </div>
                   </div>
                 </td>
 
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(member.role)}`}>
+                  <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(member.role))}>
                     {member.roleDisplay}
                   </span>
                 </td>
 
                 <td className="p-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_BG[member.status] ?? ''} ${STATUS_COLOR[member.status] ?? ''}`}>
+                  <span className={cn('rounded-full px-2 py-1 text-xs font-medium', STATUS_BG[member.status], STATUS_COLOR[member.status])}>
                     {member.statusDisplay}
                   </span>
                 </td>
 
                 <td className="p-4">
                   <div className="space-y-1">
-                    <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Icon name="Phone" size={12} />
                       <span>{member.phone}</span>
                     </div>
-                    <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Icon name="Mail" size={12} />
                       <span className="truncate max-w-32">{member.email}</span>
                     </div>
@@ -158,7 +160,7 @@ const StaffTable = memo<StaffTableProps>(({
                 <td className="p-4">
                   <div className="text-sm">
                     <p className="text-card-foreground font-medium">{member.shift}</p>
-                    <p className="text-muted-foreground">{(member as any).workingHours}</p>
+                    <p className="text-muted-foreground">{member.workingHours}</p>
                   </div>
                 </td>
 
@@ -170,7 +172,7 @@ const StaffTable = memo<StaffTableProps>(({
                 </td>
 
                 <td className="p-4">
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" onClick={() => onViewDetails(member)} className="hover-scale">
                       <Icon name="Eye" size={14} />
                     </Button>

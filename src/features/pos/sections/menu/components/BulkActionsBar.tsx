@@ -20,17 +20,17 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-1100">
+    <div className="fixed bottom-6 left-1/2 z-[1100] -translate-x-1/2">
       <div className="bg-surface border border-border rounded-lg shadow-modal px-6 py-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Icon name="CheckSquare" size={20} className="text-primary" />
             <span className="text-sm font-medium text-foreground">
               Đã chọn {selectedCount} món
             </span>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -52,7 +52,7 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
             </Button>
 
             <Button
-              variant="destructive"
+              variant="error"
               size="sm"
               onClick={onBulkDelete}
               iconName="Trash2"

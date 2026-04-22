@@ -14,18 +14,18 @@ interface BulkActionsBarProps {
 }
 
 const ROLE_OPTIONS = [
-  { value: 'owner',   label: 'Chủ cửa hàng' },
-  { value: 'manager', label: 'Quản lý'       },
-  { value: 'cashier', label: 'Thu ngân'       },
+  { value: 'owner', label: 'Chủ cửa hàng' },
+  { value: 'manager', label: 'Quản lý' },
+  { value: 'cashier', label: 'Thu ngân' },
   { value: 'kitchen', label: 'Nhân viên bếp' },
-  { value: 'waiter',  label: 'Phục vụ'       },
-  { value: 'cleaner', label: 'Vệ sinh'        },
+  { value: 'waiter', label: 'Phục vụ' },
+  { value: 'cleaner', label: 'Vệ sinh' },
 ];
 
 const STATUS_OPTIONS = [
-  { value: 'active',   label: 'Kích hoạt'   },
+  { value: 'active', label: 'Kích hoạt' },
   { value: 'inactive', label: 'Vô hiệu hóa' },
-  { value: 'on-break', label: 'Tạm nghỉ'    },
+  { value: 'on-break', label: 'Tạm nghỉ' },
 ];
 
 const BulkActionsBar = memo<BulkActionsBarProps>(({
@@ -40,9 +40,9 @@ const BulkActionsBar = memo<BulkActionsBarProps>(({
   return (
     <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="flex size-6 items-center justify-center rounded-full bg-primary">
               <Icon name="Check" size={14} color="white" />
             </div>
             <span className="font-medium text-primary">
@@ -61,30 +61,30 @@ const BulkActionsBar = memo<BulkActionsBarProps>(({
           </Button>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <span className="text-sm text-primary">Đổi vai trò:</span>
             <Select
               placeholder="Chọn vai trò"
               options={ROLE_OPTIONS}
               value=""
-              onChange={onBulkRoleChange}
+              onChange={(event) => onBulkRoleChange(event.target.value)}
               className="w-40"
             />
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <span className="text-sm text-primary">Đổi trạng thái:</span>
             <Select
               placeholder="Chọn trạng thái"
               options={STATUS_OPTIONS}
               value=""
-              onChange={onBulkStatusChange}
+              onChange={(event) => onBulkStatusChange(event.target.value)}
               className="w-40"
             />
           </div>
 
-          <div className="flex items-center space-x-2 border-l border-primary/20 pl-3">
+          <div className="flex items-center gap-2 border-l border-primary/20 pl-3">
             <Button
               variant="outline"
               size="sm"

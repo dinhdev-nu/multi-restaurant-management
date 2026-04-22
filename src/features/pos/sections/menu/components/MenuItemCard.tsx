@@ -2,6 +2,7 @@ import React from 'react';
 import Image from '@/components/AppImage';
 import Icon from '@/components/AppIcon';
 import Button from '../../../components/Button';
+import { cn } from '@/lib/utils';
 
 type ItemStatus = 'available' | 'low_stock' | 'unavailable';
 
@@ -27,9 +28,9 @@ interface MenuItemCardProps {
 }
 
 const STATUS_CONFIG: Record<ItemStatus, { color: string; icon: string; text: string }> = {
-  available:   { color: 'text-success',           icon: 'CheckCircle',   text: 'Có sẵn'  },
-  low_stock:   { color: 'text-warning',            icon: 'AlertTriangle', text: 'Sắp hết' },
-  unavailable: { color: 'text-error',              icon: 'XCircle',       text: 'Hết hàng'},
+  available: { color: 'text-success', icon: 'CheckCircle', text: 'Có sẵn' },
+  low_stock: { color: 'text-warning', icon: 'AlertTriangle', text: 'Sắp hết' },
+  unavailable: { color: 'text-error', icon: 'XCircle', text: 'Hết hàng' },
 };
 
 const formatPrice = (price: number): string =>
@@ -46,33 +47,35 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
   const statusConfig = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.unavailable;
 
   return (
-    <div className={`
-      bg-card border border-border rounded-lg p-4 hover:shadow-interactive transition-smooth
-      ${isSelected ? 'ring-2 ring-primary' : ''}
-    `}>
+    <div
+      className={cn(
+        'rounded-lg border border-border bg-card p-4 transition-smooth hover:shadow-interactive',
+        isSelected && 'ring-2 ring-primary'
+      )}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-3">
           <input
             type="checkbox"
             checked={isSelected}
             onChange={(e) => onSelect(item._id, e.target.checked)}
-            className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+            className="size-4 rounded border-border text-primary focus:ring-primary"
           />
-          <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted">
-            <Image src={item.image} alt={item.name} className="w-full h-full object-cover" />
+          <div className="size-16 overflow-hidden rounded-lg bg-muted">
+            <Image src={item.image ?? ''} alt={item.name} className="w-full h-full object-cover" />
           </div>
         </div>
 
-        <div className="flex items-center space-x-1">
-          <Button variant="ghost" size="icon" onClick={() => onEdit(item)} className="w-8 h-8">
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => onEdit(item)} className="size-8">
             <Icon name="Edit" size={16} />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => onDelete(item._id)}
-            className="w-8 h-8 text-error hover:text-error"
+            className="size-8 text-error hover:text-error"
           >
             <Icon name="Trash2" size={16} />
           </Button>
@@ -88,7 +91,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
 
         <div className="flex items-center justify-between">
           <span className="font-semibold text-primary text-sm">{formatPrice(item.price)}</span>
-          <div className={`flex items-center space-x-1 ${statusConfig.color}`}>
+          <div className={cn('flex items-center gap-1', statusConfig.color)}>
             <Icon name={statusConfig.icon} size={12} />
             <span className="text-xs">{statusConfig.text}</span>
           </div>

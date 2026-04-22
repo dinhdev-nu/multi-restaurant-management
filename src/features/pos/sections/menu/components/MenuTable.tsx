@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Image from '@/components/AppImage';
 import Icon from '@/components/AppIcon';
 import Button from '../../../components/Button';
+import { cn } from '@/lib/utils';
 
 type ItemStatus = 'available' | 'low_stock' | 'unavailable';
 
@@ -29,9 +30,9 @@ interface MenuTableProps {
 }
 
 const STATUS_BADGE: Record<ItemStatus, { color: string; icon: string; text: string }> = {
-  available:   { color: 'bg-success/10 text-success border-success/20',   icon: 'CheckCircle',   text: 'Có sẵn'  },
-  low_stock:   { color: 'bg-warning/10 text-warning border-warning/20',   icon: 'AlertTriangle', text: 'Sắp hết' },
-  unavailable: { color: 'bg-error/10 text-error border-error/20',         icon: 'XCircle',       text: 'Hết hàng'},
+  available: { color: 'bg-success/10 text-success border-success/20', icon: 'CheckCircle', text: 'Có sẵn' },
+  low_stock: { color: 'bg-warning/10 text-warning border-warning/20', icon: 'AlertTriangle', text: 'Sắp hết' },
+  unavailable: { color: 'bg-error/10 text-error border-error/20', icon: 'XCircle', text: 'Hết hàng' },
 };
 
 const formatPrice = (price: number): string =>
@@ -40,7 +41,7 @@ const formatPrice = (price: number): string =>
 const StatusBadge: React.FC<{ status: ItemStatus }> = ({ status }) => {
   const config = STATUS_BADGE[status] ?? STATUS_BADGE.unavailable;
   return (
-    <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${config.color}`}>
+    <span className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium', config.color)}>
       <Icon name={config.icon} size={12} />
       <span>{config.text}</span>
     </span>
@@ -60,9 +61,12 @@ const MenuTable: React.FC<MenuTableProps> = ({
   const isIndeterminate = selectedItems.length > 0 && selectedItems.length < items.length;
 
   const checkboxRef = useRef<HTMLInputElement>(null);
-  if (checkboxRef.current) {
-    checkboxRef.current.indeterminate = isIndeterminate;
-  }
+
+  useEffect(() => {
+    if (checkboxRef.current) {
+      checkboxRef.current.indeterminate = isIndeterminate;
+    }
+  }, [isIndeterminate]);
 
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
@@ -76,7 +80,7 @@ const MenuTable: React.FC<MenuTableProps> = ({
                   type="checkbox"
                   checked={isAllSelected}
                   onChange={(e) => onSelectAll(e.target.checked)}
-                  className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                  className="size-4 rounded border-border text-primary focus:ring-primary"
                 />
               </th>
               <th className="text-left p-4 text-sm font-medium text-foreground">Món ăn</th>
@@ -92,23 +96,24 @@ const MenuTable: React.FC<MenuTableProps> = ({
             {items.map((item) => (
               <tr
                 key={item._id}
-                className={`border-b border-border hover:bg-muted/30 transition-smooth ${
-                  selectedItems.includes(item._id) ? 'bg-primary/5' : ''
-                }`}
+                className={cn(
+                  'border-b border-border transition-smooth hover:bg-muted/30',
+                  selectedItems.includes(item._id) && 'bg-primary/5'
+                )}
               >
                 <td className="p-4">
                   <input
                     type="checkbox"
                     checked={selectedItems.includes(item._id)}
                     onChange={(e) => onSelectItem(item._id, e.target.checked)}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                    className="size-4 rounded border-border text-primary focus:ring-primary"
                   />
                 </td>
 
                 <td className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                      <Image src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  <div className="flex items-center gap-3">
+                    <div className="size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                      <Image src={item.image ?? ''} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-foreground text-sm truncate">{item.name}</p>
@@ -152,7 +157,7 @@ const MenuTable: React.FC<MenuTableProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => onToggleAvailability(item._id, item.status)}
-                      className="w-8 h-8"
+                      className="size-8"
                       title={item.status === 'available' ? 'Tạm ngưng' : 'Kích hoạt'}
                     >
                       <Icon name={item.status === 'available' ? 'EyeOff' : 'Eye'} size={14} />
@@ -162,7 +167,7 @@ const MenuTable: React.FC<MenuTableProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => onEdit(item)}
-                      className="w-8 h-8"
+                      className="size-8"
                       title="Chỉnh sửa"
                     >
                       <Icon name="Edit" size={14} />
@@ -172,7 +177,7 @@ const MenuTable: React.FC<MenuTableProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => onDelete(item._id)}
-                      className="w-8 h-8 text-error hover:text-error"
+                      className="size-8 text-error hover:text-error"
                       title="Xóa"
                     >
                       <Icon name="Trash2" size={14} />

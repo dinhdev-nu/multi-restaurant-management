@@ -11,11 +11,16 @@ export interface ConfirmationDialogProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'default' | 'danger' | 'warning';
+  variant?: 'default' | 'danger' | 'warning' | 'success';
   icon?: string;
 }
 
 const variantStyles = {
+  success: {
+    iconWrapper: 'bg-success/10',
+    iconColor: 'text-success',
+    confirmButton: 'default' as const,
+  },
   danger: {
     iconWrapper: 'bg-destructive/10',
     iconColor: 'text-destructive',

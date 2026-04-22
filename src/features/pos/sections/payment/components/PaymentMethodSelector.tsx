@@ -84,11 +84,11 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       : PAYMENT_METHODS;
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-foreground mb-4">
+    <div className="space-y-3">
+      <h3 className="mb-2 text-base font-semibold text-foreground">
         Chọn phương thức thanh toán
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
         {filteredMethods.map((method) => {
           const isMethodLoading = isLoading && loadingMethod === method.id;
           const isSelected = selectedMethod === method.id;
@@ -99,19 +99,19 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               onClick={() => onMethodSelect(method.id)}
               disabled={isLoading}
               className={`
-                relative p-4 rounded-lg border-2 transition-all duration-200 hover-scale
+                relative rounded-lg border-2 p-3 transition-all duration-200 hover-scale
                 ${isSelected ? `${method.color} border-current shadow-md` : 'bg-surface border-border hover:border-muted-foreground/30'}
                 ${isLoading ? 'cursor-not-allowed opacity-60' : ''}
               `}
             >
-              <div className="flex items-center space-x-3">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isSelected ? 'bg-white/20' : 'bg-muted'}`}>
+              <div className="flex items-center gap-2.5">
+                <div className={`flex size-10 items-center justify-center rounded-lg ${isSelected ? 'bg-white/20' : 'bg-muted'}`}>
                   {isMethodLoading ? (
-                    <Icon name="Loader" size={24} className="text-primary animate-spin" />
+                    <Icon name="Loader" size={20} className="text-primary animate-spin" />
                   ) : (
                     <Icon
                       name={method.icon}
-                      size={24}
+                      size={20}
                       className={isSelected ? method.iconColor : 'text-muted-foreground'}
                     />
                   )}
@@ -121,7 +121,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                   <h4 className={`font-medium text-sm ${isSelected ? 'text-current' : 'text-foreground'}`}>
                     {isMethodLoading ? 'Đang tạo mã QR...' : method.name}
                   </h4>
-                  <p className={`text-xs mt-1 ${isSelected ? 'text-current/80' : 'text-muted-foreground'}`}>
+                  <p className={`mt-0.5 text-xs ${isSelected ? 'text-current/80' : 'text-muted-foreground'}`}>
                     {method.description}
                   </p>
                 </div>

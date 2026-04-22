@@ -1,6 +1,7 @@
 import React from 'react';
 import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
+import { cn } from '@/lib/utils';
 import Button from '../../../components/Button';
 import type { Staff } from './StaffCard';
 
@@ -23,35 +24,35 @@ interface StaffDetailsModalProps {
 // ── Style maps ────────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
-  'active':   'text-success',
+  'active': 'text-success',
   'on-break': 'text-warning',
   'inactive': 'text-error',
 };
 
 const STATUS_BG: Record<string, string> = {
-  'active':   'bg-success/10',
+  'active': 'bg-success/10',
   'on-break': 'bg-warning/10',
   'inactive': 'bg-error/10',
 };
 
 const STATUS_DOT: Record<string, string> = {
-  'active':   'bg-success',
+  'active': 'bg-success',
   'on-break': 'bg-warning',
   'inactive': 'bg-error',
 };
 
 const ROLE_COLOR: Record<string, string> = {
-  owner:   'bg-primary text-primary-foreground',
+  owner: 'bg-primary text-primary-foreground',
   manager: 'bg-accent text-accent-foreground',
   cashier: 'bg-secondary text-secondary-foreground',
   kitchen: 'bg-success text-success-foreground',
 };
 
 const ACTIVITY_ICON: Record<ActivityType, string> = {
-  order:   'Receipt',
+  order: 'Receipt',
   payment: 'CreditCard',
   checkin: 'LogIn',
-  update:  'Edit',
+  update: 'Edit',
 };
 
 const getRoleColor = (role: string): string =>
@@ -60,10 +61,10 @@ const getRoleColor = (role: string): string =>
 // ── Static sample data ────────────────────────────────────────────────────────
 
 const RECENT_ACTIVITIES: RecentActivity[] = [
-  { time: '14:30', action: 'Xử lý đơn hàng #1234',    type: 'order'   },
-  { time: '14:15', action: 'Thanh toán bàn số 5',      type: 'payment' },
-  { time: '14:00', action: 'Bắt đầu ca làm việc',      type: 'checkin' },
-  { time: '13:45', action: 'Cập nhật thực đơn',        type: 'update'  },
+  { time: '14:30', action: 'Xử lý đơn hàng #1234', type: 'order' },
+  { time: '14:15', action: 'Thanh toán bàn số 5', type: 'payment' },
+  { time: '14:00', action: 'Bắt đầu ca làm việc', type: 'checkin' },
+  { time: '13:45', action: 'Cập nhật thực đơn', type: 'update' },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -78,14 +79,14 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
   if (!isOpen || !staff) return null;
 
   const performanceData = [
-    { label: 'Đơn hàng hôm nay',    value: (staff as any).ordersToday ?? '—', icon: 'Receipt'  },
-    { label: 'Giờ làm việc',         value: workedDisplay,                      icon: 'Clock'    },
-    { label: 'Đánh giá trung bình',  value: '4.8/5',                            icon: 'Star'     },
-    { label: 'Khách hàng phục vụ',   value: '156',                              icon: 'Users'    },
+    { label: 'Đơn hàng hôm nay', value: staff.ordersToday ?? '—', icon: 'Receipt' },
+    { label: 'Giờ làm việc', value: workedDisplay, icon: 'Clock' },
+    { label: 'Đánh giá trung bình', value: '4.8/5', icon: 'Star' },
+    { label: 'Khách hàng phục vụ', value: '156', icon: 'Users' },
   ];
 
   return (
-    <div className="fixed inset-0 z-1200 flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-[1200] flex items-center justify-center overflow-hidden">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
@@ -93,20 +94,20 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
       <div className="relative bg-card border border-border rounded-lg shadow-modal w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="w-16 h-16 rounded-full overflow-hidden bg-muted">
-                <Image src={staff.avatar} alt={staff.name} className="w-full h-full object-cover" />
+              <div className="size-16 rounded-full overflow-hidden bg-muted">
+                <Image src={staff.avatar ?? ''} alt={staff.name} className="w-full h-full object-cover" />
               </div>
-              <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-card ${STATUS_DOT[staff.status] ?? 'bg-error'}`} />
+              <div className={cn('absolute -bottom-1 -right-1 size-5 rounded-full border-2 border-card', STATUS_DOT[staff.status] ?? 'bg-error')} />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-card-foreground">{staff.name}</h2>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(staff.role)}`}>
+              <div className="mt-1 flex items-center gap-2">
+                <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(staff.role))}>
                   {staff.roleDisplay}
                 </span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_BG[staff.status] ?? ''} ${STATUS_COLOR[staff.status] ?? ''}`}>
+                <span className={cn('rounded-full px-2 py-1 text-xs font-medium', STATUS_BG[staff.status] ?? '', STATUS_COLOR[staff.status] ?? '')}>
                   {staff.statusDisplay}
                 </span>
               </div>
@@ -130,12 +131,12 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
                 </h3>
                 <div className="bg-muted/20 rounded-lg p-4 space-y-3">
                   {[
-                    { icon: 'Badge',    label: 'Mã nhân viên',      value: (staff as any).employeeId },
-                    { icon: 'Phone',    label: 'Số điện thoại',      value: staff.phone               },
-                    { icon: 'Mail',     label: 'Email',               value: staff.email               },
-                    { icon: 'Calendar', label: 'Ngày vào làm',        value: '15/08/2024'              },
+                    { icon: 'Badge', label: 'Mã nhân viên', value: staff.employeeId },
+                    { icon: 'Phone', label: 'Số điện thoại', value: staff.phone },
+                    { icon: 'Mail', label: 'Email', value: staff.email },
+                    { icon: 'Calendar', label: 'Ngày vào làm', value: '15/08/2024' },
                   ].map((row) => (
-                    <div key={row.label} className="flex items-center space-x-3">
+                    <div key={row.label} className="flex items-center gap-3">
                       <Icon name={row.icon} size={16} className="text-muted-foreground" />
                       <div>
                         <p className="text-sm text-muted-foreground">{row.label}</p>
@@ -154,12 +155,12 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
                 </h3>
                 <div className="bg-muted/20 rounded-lg p-4 space-y-3">
                   {[
-                    { icon: 'Clock',      label: 'Ca làm việc',          value: staff.shift                         },
-                    { icon: 'Timer',      label: 'Giờ làm việc',          value: (staff as any).workingHours         },
-                    { icon: 'DollarSign', label: 'Mức lương',              value: '8.500.000 VND'                    },
-                    { icon: 'LogIn',      label: 'Lần đăng nhập cuối',    value: 'Hôm nay, 14:30'                   },
+                    { icon: 'Clock', label: 'Ca làm việc', value: staff.shift },
+                    { icon: 'Timer', label: 'Giờ làm việc', value: staff.workingHours },
+                    { icon: 'DollarSign', label: 'Mức lương', value: '8.500.000 VND' },
+                    { icon: 'LogIn', label: 'Lần đăng nhập cuối', value: 'Hôm nay, 14:30' },
                   ].map((row) => (
-                    <div key={row.label} className="flex items-center space-x-3">
+                    <div key={row.label} className="flex items-center gap-3">
                       <Icon name={row.icon} size={16} className="text-muted-foreground" />
                       <div>
                         <p className="text-sm text-muted-foreground">{row.label}</p>
@@ -180,7 +181,7 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {performanceData.map((item, index) => (
                   <div key={index} className="bg-muted/20 rounded-lg p-4 text-center">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10">
                       <Icon name={item.icon} size={20} className="text-primary" />
                     </div>
                     <p className="text-lg font-semibold text-card-foreground">{item.value}</p>
@@ -199,8 +200,8 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
               <div className="bg-muted/20 rounded-lg p-4">
                 <div className="space-y-3">
                   {RECENT_ACTIVITIES.map((activity, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-2 hover:bg-muted/30 rounded-lg transition-colors duration-200">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <div key={index} className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-200 hover:bg-muted/30">
+                      <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
                         <Icon name={ACTIVITY_ICON[activity.type]} size={14} className="text-primary" />
                       </div>
                       <div className="flex-1">
@@ -224,7 +225,7 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
                   <h4 className="font-medium text-card-foreground mb-3">Được phép</h4>
                   <div className="space-y-2">
                     {['Xử lý đơn hàng', 'Thanh toán', 'Quản lý bàn', 'Xem báo cáo'].map((perm) => (
-                      <div key={perm} className="flex items-center space-x-2 text-sm text-success">
+                      <div key={perm} className="flex items-center gap-2 text-sm text-success">
                         <Icon name="Check" size={14} />
                         <span>{perm}</span>
                       </div>
@@ -235,7 +236,7 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
                   <h4 className="font-medium text-card-foreground mb-3">Bị hạn chế</h4>
                   <div className="space-y-2">
                     {['Quản lý nhân viên', 'Cài đặt hệ thống', 'Xóa dữ liệu', 'Báo cáo tài chính'].map((perm) => (
-                      <div key={perm} className="flex items-center space-x-2 text-sm text-error">
+                      <div key={perm} className="flex items-center gap-2 text-sm text-error">
                         <Icon name="X" size={14} />
                         <span>{perm}</span>
                       </div>
@@ -248,7 +249,7 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-border">
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
           <Button
             variant="outline"
             iconName="Edit"

@@ -5,7 +5,7 @@ import Button from '../../components/Button';
 import PaymentMethodSelector, { type PaymentMethodId } from './components/PaymentMethodSelector';
 import OrderSummary from './components/OrderSummary';
 import CashPaymentForm from './components/CashPaymentForm';
-import CardPaymentForm, { type CardFormData } from './components/CardPaymentForm';
+import CardPaymentForm from './components/CardPaymentForm';
 import DigitalWalletForm from './components/DigitalWalletForm';
 import CustomerInfoForm, { type CustomerInfo } from './components/CustomerInfoForm';
 import PaymentSuccess, { type PaymentData } from './components/PaymentSuccess';
@@ -39,7 +39,7 @@ const steps = [
 const isWalletMethod = (method: PaymentMethod): method is WalletMethod =>
     WALLET_METHODS.includes(method as WalletMethod);
 
-const PaymentProcessing: React.FC = () => {
+const PaymentSection: React.FC = () => {
     const [currentStep, setCurrentStep] = useState<Step>('method');
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('');
     const [customerInfo, setCustomerInfo] = useState<Partial<CustomerInfo>>({ name: '', phone: '' });
@@ -116,7 +116,7 @@ const PaymentProcessing: React.FC = () => {
         completePayment('cash', cashPaidAmount, cashChange);
     };
 
-    const handleCardComplete = (_cardData: CardFormData) => {
+    const handleCardComplete = () => {
         completePayment('card', ORDER_DATA.total, 0);
     };
 
@@ -290,10 +290,10 @@ const PaymentProcessing: React.FC = () => {
     };
 
     return (
-        <div className="h-full min-h-0 overflow-auto p-6">
-            <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
+        <div className="h-full min-h-0 overflow-auto p-4 md:p-5">
+            <div className="mb-5">
+                <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-2.5 md:gap-3">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -319,16 +319,16 @@ const PaymentProcessing: React.FC = () => {
                             <Icon name="ArrowLeft" size={20} />
                         </Button>
                         <div>
-                            <h1 className="text-2xl font-bold text-foreground">
+                            <h1 className="text-xl font-bold leading-tight text-foreground md:text-2xl">
                                 {getStepTitle()}
                             </h1>
-                            <p className="text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                                 Xử lý thanh toán an toàn và nhanh chóng
                             </p>
                         </div>
                     </div>
 
-                    <div className="hidden md:flex items-center space-x-4 text-sm text-muted-foreground">
+                    <div className="hidden items-center gap-3 whitespace-nowrap text-xs text-muted-foreground lg:flex">
                         <span>Đơn hàng: {ORDER_DATA.orderId}</span>
                         <span className="text-xs font-mono">({ORDER_DATA._id})</span>
                         <span>•</span>
@@ -338,7 +338,7 @@ const PaymentProcessing: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-wrap items-center gap-2">
                     {steps.map((step, index) => {
                         const isActive = step.id === currentStep;
                         const isCompleted = steps.findIndex((s) => s.id === currentStep) > index;
@@ -347,7 +347,7 @@ const PaymentProcessing: React.FC = () => {
                             <div key={step.id} className="flex items-center">
                                 <div
                                     className={`
-                  flex items-center space-x-2 px-3 py-2 rounded-lg transition-smooth
+                  flex items-center space-x-2 rounded-lg px-2.5 py-1.5 transition-smooth
                   ${isActive
                                             ? 'bg-primary text-primary-foreground'
                                             : isCompleted
@@ -367,8 +367,8 @@ const PaymentProcessing: React.FC = () => {
                                 {index < steps.length - 1 && (
                                     <Icon
                                         name="ChevronRight"
-                                        size={16}
-                                        className="mx-2 text-muted-foreground"
+                                        size={14}
+                                        className="mx-1.5 text-muted-foreground"
                                     />
                                 )}
                             </div>
@@ -377,12 +377,12 @@ const PaymentProcessing: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-surface border border-border rounded-lg p-6">
+            <div className="rounded-lg border border-border bg-surface p-4 md:p-5">
                 {renderStepContent()}
             </div>
 
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center space-x-3">
+            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 md:p-4">
+                <div className="flex items-center gap-3">
                     <Icon name="Shield" size={20} className="text-blue-600" />
                     <div>
                         <h4 className="font-medium text-blue-800">Bảo mật thanh toán</h4>
@@ -397,4 +397,4 @@ const PaymentProcessing: React.FC = () => {
     );
 };
 
-export default PaymentProcessing;
+export default PaymentSection;

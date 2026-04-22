@@ -37,6 +37,14 @@ const sizeStyles: Record<ButtonSize, string> = {
   icon: 'h-10 w-10 p-0 rounded-lg',
 };
 
+const iconSizes: Record<ButtonSize, number> = {
+  xs: 14,
+  sm: 16,
+  default: 18,
+  lg: 20,
+  icon: 18,
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -57,7 +65,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const hasIcon = !!iconName;
     const isIconOnly = hasIcon && !children;
 
-    const iconSize = size === 'xs' ? 14 : size === 'sm' ? 16 : size === 'lg' ? 20 : 18;
+    const iconSize = iconSizes[size];
 
     return (
       <button
@@ -73,7 +81,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           // Variant
           variantStyles[variant],
           // Size
-          isIconOnly ? 'h-10 w-10 p-0 rounded-lg' : sizeStyles[size],
+          isIconOnly ? sizeStyles.icon : sizeStyles[size],
           // Full width
           fullWidth && 'w-full',
           // Custom className

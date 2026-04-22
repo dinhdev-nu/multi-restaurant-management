@@ -1,5 +1,6 @@
 import React from 'react';
 import Button from '../../../components/Button';
+import { cn } from '@/lib/utils';
 
 interface Category {
   id: string;
@@ -23,9 +24,16 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   onAddCategory,
 }) => {
   const allCount = Object.values(itemCounts).reduce((sum, count) => sum + count, 0);
+  const getBadgeClass = (isSelected: boolean) =>
+    cn(
+      'ml-2 rounded-full px-2 py-0.5 text-xs',
+      isSelected
+        ? 'bg-primary-foreground/20 text-primary-foreground'
+        : 'bg-muted text-muted-foreground'
+    );
 
   return (
-    <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+    <div className="flex items-center gap-2 overflow-x-auto pb-2">
       <Button
         variant={selectedCategory === 'all' ? 'default' : 'outline'}
         size="sm"
@@ -34,12 +42,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
       >
         <span>Tất cả</span>
         {allCount > 0 && (
-          <span className={`
-            ml-2 px-2 py-0.5 rounded-full text-xs
-            ${selectedCategory === 'all'
-              ? 'bg-primary-foreground/20 text-primary-foreground'
-              : 'bg-muted text-muted-foreground'}
-          `}>
+          <span className={getBadgeClass(selectedCategory === 'all')}>
             {allCount}
           </span>
         )}
@@ -61,12 +64,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
           >
             <span>{category.name}</span>
             {count > 0 && (
-              <span className={`
-                ml-2 px-2 py-0.5 rounded-full text-xs
-                ${isSelected
-                  ? 'bg-primary-foreground/20 text-primary-foreground'
-                  : 'bg-muted text-muted-foreground'}
-              `}>
+              <span className={getBadgeClass(isSelected)}>
                 {count}
               </span>
             )}

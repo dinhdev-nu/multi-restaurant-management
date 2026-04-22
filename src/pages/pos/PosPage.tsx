@@ -11,6 +11,9 @@ import {
   getRelativeTime,
 } from '@/features/pos/pos-mock';
 import PaymentSection from '@/features/pos/sections/payment/PaymentSection';
+import OrderSection from '@/features/pos/sections/order/OrderSection';
+import MenuSection from '@/features/pos/sections/menu/MenuSection';
+import StaffSection from '@/features/pos/sections/staff/StaffSection';
 
 const ROUTE_TO_SECTION: Record<string, POSSection> = {
   '': 'main-pos',
@@ -88,11 +91,11 @@ const PosPage: React.FC = () => {
       case 'payment':
         return <PaymentSection />;
       case 'order':
-        return <div className="p-6 text-foreground">Section Lịch sử đang phát triển.</div>;
+        return <OrderSection />;
       case 'menu':
-        return <div className="p-6 text-foreground">Section Thực đơn đang phát triển.</div>;
+        return <MenuSection />;
       case 'staff':
-        return <div className="p-6 text-foreground">Section Nhân viên đang phát triển.</div>;
+        return <StaffSection />;
       default:
         return <MainPosSection />;
     }

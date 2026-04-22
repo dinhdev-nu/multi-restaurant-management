@@ -1,18 +1,25 @@
 import React, { memo } from 'react';
 import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
+import { cn } from '@/lib/utils';
 import Button from '../../../components/Button';
 
 type StaffStatus = 'active' | 'on-break' | 'inactive';
-type StaffRole   = 'owner' | 'manager' | 'cashier' | 'kitchen' | 'waiter' | 'cleaner';
+type StaffRole = 'owner' | 'manager' | 'cashier' | 'kitchen' | 'waiter' | 'cleaner';
 
 export interface Staff {
   _id: string;
   name: string;
   avatar?: string;
+  employeeId?: string;
   phone: string;
   email: string;
   shift: string;
+  workingHours?: string;
+  ordersToday?: number;
+  joinDate?: string;
+  address?: string;
+  notes?: string;
   role: StaffRole;
   roleDisplay: string;
   status: StaffStatus;
@@ -32,25 +39,25 @@ interface StaffCardProps {
 // ── Style maps ────────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<StaffStatus, string> = {
-  'active':   'text-success',
+  'active': 'text-success',
   'on-break': 'text-warning',
   'inactive': 'text-error',
 };
 
 const STATUS_BG: Record<StaffStatus, string> = {
-  'active':   'bg-success/10',
+  'active': 'bg-success/10',
   'on-break': 'bg-warning/10',
   'inactive': 'bg-error/10',
 };
 
 const STATUS_DOT: Record<StaffStatus, string> = {
-  'active':   'bg-success',
+  'active': 'bg-success',
   'on-break': 'bg-warning',
   'inactive': 'bg-error',
 };
 
 const ROLE_COLOR: Record<string, string> = {
-  owner:   'bg-primary text-primary-foreground',
+  owner: 'bg-primary text-primary-foreground',
   manager: 'bg-accent text-accent-foreground',
   cashier: 'bg-secondary text-secondary-foreground',
   kitchen: 'bg-success text-success-foreground',
@@ -73,28 +80,28 @@ const StaffCard = memo<StaffCardProps>(({
   <div className="bg-card border border-border rounded-lg p-6 hover:shadow-interactive transition-shadow duration-200">
     {/* Header */}
     <div className="flex items-start justify-between mb-4">
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-4">
         <div className="relative">
-          <div className="w-16 h-16 rounded-full overflow-hidden bg-muted">
-            <Image src={staff.avatar} alt={staff.name} className="w-full h-full object-cover" />
+          <div className="size-16 rounded-full overflow-hidden bg-muted">
+            <Image src={staff.avatar ?? ''} alt={staff.name} className="w-full h-full object-cover" />
           </div>
-          <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-card ${STATUS_DOT[staff.status]}`} />
+          <div className={cn('absolute -bottom-1 -right-1 size-5 rounded-full border-2 border-card', STATUS_DOT[staff.status])} />
         </div>
 
         <div className="flex-1">
           <h3 className="font-semibold text-card-foreground text-lg">{staff.name}</h3>
-          <div className="flex items-center space-x-2 mt-1">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(staff.role)}`}>
+          <div className="mt-1 flex items-center gap-2">
+            <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(staff.role))}>
               {staff.roleDisplay}
             </span>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_BG[staff.status]} ${STATUS_COLOR[staff.status]}`}>
+            <span className={cn('rounded-full px-2 py-1 text-xs font-medium', STATUS_BG[staff.status], STATUS_COLOR[staff.status])}>
               {staff.statusDisplay}
             </span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" onClick={() => onEdit(staff)} className="hover-scale">
           <Icon name="Edit" size={16} />
         </Button>
@@ -114,15 +121,15 @@ const StaffCard = memo<StaffCardProps>(({
 
     {/* Contact Info */}
     <div className="space-y-2 mb-4">
-      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Icon name="Phone" size={14} />
         <span>{staff.phone}</span>
       </div>
-      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Icon name="Mail" size={14} />
         <span>{staff.email}</span>
       </div>
-      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Icon name="Calendar" size={14} />
         <span>Ca: {staff.shift}</span>
       </div>
@@ -141,7 +148,7 @@ const StaffCard = memo<StaffCardProps>(({
     </div>
 
     {/* Action Buttons */}
-    <div className="flex space-x-2">
+    <div className="flex gap-2">
       <Button
         variant="outline"
         size="sm"

@@ -1,7 +1,7 @@
 import React from 'react';
 import OrderSummaryCards from './components/OrderSummaryCards';
 import OrderFilters from './components/OrderFilters';
-import OrderTable from './components/OrderTable';
+import OrderTable, { type Order } from './components/OrderTable';
 import OrderDetailsModal from './components/OrderDetailsModal';
 import Button from '../../components/Button';
 import Icon from '../../components/AppIcon';
@@ -12,14 +12,15 @@ const isLoadingOrders = false;
 const isLoadingMore = false;
 const hasMore = true;
 const totalFetched = 40;
-const highlightedOrderId: string | null = null;
+const highlightedOrderId: string | undefined = undefined;
 const showDetailsModal = false;
 const selectedOrder = null;
+const noop = () => { };
 
-const orders = [
+const orders: Order[] = [
     {
         _id: 'ord001', orderId: 'HD-001', table: 'Bàn 1',
-        status: 'completed', paymentStatus: 'paid', paymentMethod: 'cash',
+        status: 'completed', paymentStatus: 'paid',
         total: 104500, subtotal: 95000, tax: 9500, discount: 0,
         timestamp: new Date().toISOString(),
         items: [
@@ -29,7 +30,7 @@ const orders = [
     },
     {
         _id: 'ord002', orderId: 'HD-002', table: 'Bàn 3',
-        status: 'pending', paymentStatus: 'unpaid', paymentMethod: null,
+        status: 'pending', paymentStatus: 'unpaid',
         total: 75000, subtotal: 68000, tax: 7000, discount: 0,
         timestamp: new Date().toISOString(),
         items: [
@@ -38,7 +39,7 @@ const orders = [
     }
 ];
 
-const filteredOrders = orders;
+const filteredOrders: Order[] = orders;
 
 const filters = {
     startDate: '',
@@ -62,11 +63,13 @@ const summaryData = {
     pendingOrders: 2
 };
 
+const activeFiltersCount = Object.values(filters).filter((value) => value && value !== 'all').length;
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const OrderHistory: React.FC = () => {
+const OrderSection: React.FC = () => {
     return (
-        <div className="p-6 space-y-6">
+        <div className="p-4 space-y-4">
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -75,12 +78,12 @@ const OrderHistory: React.FC = () => {
                         Theo dõi và quản lý tất cả giao dịch của cửa hàng
                     </p>
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-3">
                     <Button
                         variant="outline"
                         iconName="RefreshCw"
                         iconPosition="left"
-                        onClick={() => { }}
+                        onClick={noop}
                         className="hover-scale"
                     >
                         Làm mới
@@ -89,7 +92,7 @@ const OrderHistory: React.FC = () => {
                         variant="default"
                         iconName="Plus"
                         iconPosition="left"
-                        onClick={() => { }}
+                        onClick={noop}
                         className="hover-scale"
                     >
                         Tạo đơn mới
@@ -103,9 +106,9 @@ const OrderHistory: React.FC = () => {
             {/* Filters */}
             <OrderFilters
                 filters={filters}
-                onFilterChange={() => { }}
-                onExport={() => { }}
-                onClearFilters={() => { }}
+                onFilterChange={noop}
+                onExport={noop}
+                onClearFilters={noop}
             />
 
             {/* Results Summary */}
@@ -113,10 +116,10 @@ const OrderHistory: React.FC = () => {
                 <div className="text-sm text-muted-foreground">
                     Hiển thị {filteredOrders.length} đơn hàng từ tổng số {orders.length} đơn
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                     <Icon name="Filter" size={16} className="text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">
-                        Đã áp dụng {Object.values(filters).filter(v => v && v !== 'all').length} bộ lọc
+                        Đã áp dụng {activeFiltersCount} bộ lọc
                     </span>
                 </div>
             </div>
@@ -136,17 +139,18 @@ const OrderHistory: React.FC = () => {
                 <>
                     <OrderTable
                         orders={filteredOrders}
-                        onViewDetails={() => { }}
-                        onReprintReceipt={() => { }}
+                        onViewDetails={noop}
+                        onReprintReceipt={noop}
+                        onPayOrder={noop}
                         highlightedOrderId={highlightedOrderId}
                     />
 
                     {/* Load More Button */}
-                    {!isLoadingOrders && orders.length > 0 && hasMore && (
-                        <div className="flex flex-col items-center gap-3 py-6">
+                    {orders.length > 0 && hasMore && (
+                        <div className="flex flex-col items-center gap-2 py-4">
                             <Button
                                 variant="outline"
-                                onClick={() => { }}
+                                onClick={noop}
                                 disabled={isLoadingMore}
                                 iconName={isLoadingMore ? 'Loader2' : 'ChevronDown'}
                                 iconPosition="right"
@@ -161,7 +165,7 @@ const OrderHistory: React.FC = () => {
                     )}
 
                     {/* End of list message */}
-                    {!isLoadingOrders && orders.length > 0 && !hasMore && (
+                    {orders.length > 0 && !hasMore && (
                         <div className="text-center py-6">
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 text-sm text-muted-foreground">
                                 <Icon name="CheckCircle2" size={16} />
@@ -188,7 +192,7 @@ const OrderHistory: React.FC = () => {
                     {orders.length > 0 && (
                         <Button
                             variant="outline"
-                            onClick={() => { }}
+                            onClick={noop}
                             className="hover-scale"
                         >
                             Xóa tất cả bộ lọc
@@ -201,11 +205,11 @@ const OrderHistory: React.FC = () => {
             <OrderDetailsModal
                 order={selectedOrder}
                 isOpen={showDetailsModal}
-                onClose={() => { }}
-                onReprintReceipt={() => { }}
+                onClose={noop}
+                onReprintReceipt={noop}
             />
         </div>
     );
 };
 
-export default OrderHistory;
+export default OrderSection;

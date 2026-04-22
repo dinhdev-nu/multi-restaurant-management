@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
 import Button from '../../../components/Button';
@@ -35,26 +35,26 @@ interface StaffFormModalProps {
 // ── Static options ────────────────────────────────────────────────────────────
 
 const ROLE_OPTIONS = [
-  { value: 'owner',   label: 'Chủ cửa hàng' },
-  { value: 'manager', label: 'Quản lý'       },
-  { value: 'cashier', label: 'Thu ngân'       },
+  { value: 'owner', label: 'Chủ cửa hàng' },
+  { value: 'manager', label: 'Quản lý' },
+  { value: 'cashier', label: 'Thu ngân' },
   { value: 'kitchen', label: 'Nhân viên bếp' },
-  { value: 'waiter',  label: 'Phục vụ'       },
-  { value: 'cleaner', label: 'Vệ sinh'        },
+  { value: 'waiter', label: 'Phục vụ' },
+  { value: 'cleaner', label: 'Vệ sinh' },
 ];
 
 const SHIFT_OPTIONS = [
-  { value: 'morning',   label: 'Ca sáng (6:00 - 14:00)'  },
+  { value: 'morning', label: 'Ca sáng (6:00 - 14:00)' },
   { value: 'afternoon', label: 'Ca chiều (14:00 - 22:00)' },
-  { value: 'night',     label: 'Ca đêm (22:00 - 6:00)'   },
-  { value: 'full-time', label: 'Toàn thời gian'           },
-  { value: 'part-time', label: 'Bán thời gian'            },
+  { value: 'night', label: 'Ca đêm (22:00 - 6:00)' },
+  { value: 'full-time', label: 'Toàn thời gian' },
+  { value: 'part-time', label: 'Bán thời gian' },
 ];
 
 const WORKING_HOURS_OPTIONS = [
-  { value: '4h',  label: '4 giờ/ngày'  },
-  { value: '6h',  label: '6 giờ/ngày'  },
-  { value: '8h',  label: '8 giờ/ngày'  },
+  { value: '4h', label: '4 giờ/ngày' },
+  { value: '6h', label: '6 giờ/ngày' },
+  { value: '8h', label: '8 giờ/ngày' },
   { value: '10h', label: '10 giờ/ngày' },
   { value: '12h', label: '12 giờ/ngày' },
 ];
@@ -71,15 +71,15 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
   onFieldChange,
   onSubmit,
 }) => {
-  const [imagePreview, setImagePreview] = useState<string>(formData.avatar ?? '');
+  const imagePreview = formData.avatar ?? '';
 
   if (!isOpen) return null;
 
-  const isEditMode   = mode === 'edit';
-  const title        = isEditMode ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới';
-  const icon         = isEditMode ? 'Edit' : 'UserPlus';
-  const submitText   = isEditMode ? 'Lưu thay đổi' : 'Thêm nhân viên';
-  const submitIcon   = isEditMode ? 'Save' : 'UserPlus';
+  const isEditMode = mode === 'edit';
+  const title = isEditMode ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới';
+  const icon = isEditMode ? 'Edit' : 'UserPlus';
+  const submitText = isEditMode ? 'Lưu thay đổi' : 'Thêm nhân viên';
+  const submitIcon = isEditMode ? 'Save' : 'UserPlus';
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,19 +87,17 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
     const reader = new FileReader();
     reader.onloadend = () => {
       const result = reader.result as string;
-      setImagePreview(result);
       onFieldChange('avatar', result);
     };
     reader.readAsDataURL(file);
   };
 
   const handleRemoveImage = () => {
-    setImagePreview('');
     onFieldChange('avatar', '');
   };
 
   return (
-    <div className="fixed inset-0 z-1200 flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-[1200] flex items-center justify-center overflow-hidden">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
@@ -107,8 +105,8 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
       <div className="relative bg-card border border-border rounded-lg shadow-modal w-full max-w-2xl max-h-[90vh] overflow-hidden mx-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
               <Icon name={icon} size={20} color="white" />
             </div>
             <h2 className="text-xl font-semibold text-foreground">{title}</h2>
@@ -122,15 +120,15 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
         <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* Avatar Upload */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-foreground flex items-center space-x-2">
+            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
               <Icon name="Image" size={18} />
               <span>Ảnh đại diện</span>
             </h3>
 
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center gap-6">
               {/* Preview */}
               <div className="relative">
-                <div className="w-24 h-24 rounded-full overflow-hidden bg-muted border-2 border-border">
+                <div className="size-24 overflow-hidden rounded-full border-2 border-border bg-muted">
                   {imagePreview ? (
                     <Image src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                   ) : (
@@ -143,7 +141,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="absolute -top-1 -right-1 w-6 h-6 bg-error rounded-full flex items-center justify-center hover:bg-error/80 transition-colors"
+                    className="absolute -right-1 -top-1 flex size-6 items-center justify-center rounded-full bg-error transition-colors hover:bg-error/80"
                   >
                     <Icon name="X" size={14} color="white" />
                   </button>
@@ -174,7 +172,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
 
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-foreground flex items-center space-x-2">
+            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
               <Icon name="User" size={18} />
               <span>Thông tin cơ bản</span>
             </h3>
@@ -220,7 +218,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
 
           {/* Work Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-foreground flex items-center space-x-2">
+            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
               <Icon name="Briefcase" size={18} />
               <span>Thông tin công việc</span>
             </h3>
@@ -230,7 +228,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 placeholder="Chọn vai trò"
                 options={ROLE_OPTIONS}
                 value={formData.role}
-                onChange={(value) => onFieldChange('role', value)}
+                onChange={(event) => onFieldChange('role', event.target.value)}
                 error={errors.role}
                 required
               />
@@ -239,7 +237,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 placeholder="Chọn ca làm việc"
                 options={SHIFT_OPTIONS}
                 value={formData.shift}
-                onChange={(value) => onFieldChange('shift', value)}
+                onChange={(event) => onFieldChange('shift', event.target.value)}
                 error={errors.shift}
                 required
               />
@@ -248,7 +246,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 placeholder="Chọn số giờ"
                 options={WORKING_HOURS_OPTIONS}
                 value={formData.workingHours}
-                onChange={(value) => onFieldChange('workingHours', value)}
+                onChange={(event) => onFieldChange('workingHours', event.target.value)}
                 error={errors.workingHours}
                 required
               />
@@ -277,7 +275,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
 
           {/* Notes */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-foreground flex items-center space-x-2">
+            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
               <Icon name="FileText" size={18} />
               <span>Ghi chú</span>
             </h3>
@@ -292,14 +290,14 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-border">
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Hủy
           </Button>
           <Button
             variant="default"
             onClick={onSubmit}
-            loading={isLoading}
+            disabled={isLoading}
             iconName={submitIcon}
             iconPosition="left"
           >
