@@ -1,5 +1,4 @@
-import { cn } from "@/lib/utils";
-import { Bell, Search, Calendar } from "lucide-react";
+import { Bell, Search, Calendar, Moon, Sun } from "lucide-react";
 
 const sectionTitles: Record<string, string> = {
     overview: "Tổng quan",
@@ -14,9 +13,11 @@ const sectionTitles: Record<string, string> = {
 
 interface HeaderProps {
     activeSection: string;
+    theme?: "light" | "dark";
+    onThemeToggle?: () => void;
 }
 
-export function Header({ activeSection }: HeaderProps) {
+export function Header({ activeSection, theme = "dark", onThemeToggle }: HeaderProps) {
     return (
         <header className="h-16 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30 flex items-center justify-between px-6">
             <div className="flex items-center gap-6">
@@ -39,6 +40,19 @@ export function Header({ activeSection }: HeaderProps) {
                         className="w-full h-9 pl-9 pr-4 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-accent transition-all duration-200"
                     />
                 </div>
+
+                {/* Theme Toggle */}
+                <button
+                    onClick={onThemeToggle}
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+                    title={theme === "dark" ? "Chế độ sáng" : "Chế độ tối"}
+                >
+                    {theme === "dark" ? (
+                        <Sun className="w-5 h-5" />
+                    ) : (
+                        <Moon className="w-5 h-5" />
+                    )}
+                </button>
 
                 {/* Notifications */}
                 <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200">

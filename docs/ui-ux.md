@@ -736,7 +736,6 @@ app.com/
 │   ├── restaurants                        → Tìm kiếm nhà hàng
 │   ├── restaurants/:slug                  → Trang nhà hàng công khai
 │   ├── restaurants/:slug/menu             → Menu công khai (UC-M16)
-│   ├── restaurants/:slug/menu/search      → Tìm kiếm món (UC-M17)
 │   └── tables/:qrCode                     → Quét QR → thông tin bàn + menu
 │
 ├── dashboard/                             → Require: JWT + owner/admin

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./analysis-reporting.css";
 import { Sidebar } from "./dashboard/sidebar";
 import { Header } from "./dashboard/header";
@@ -21,7 +21,9 @@ type SectionId =
     | "reports"
     | "settings";
 
-const sectionMap: Record<SectionId, JSX.Element> = {
+type ThemeMode = "light" | "dark";
+
+const sectionMap: Record<SectionId, React.ReactNode> = {
     overview: <OverviewSection />,
     pipeline: <PipelineSection />,
     deals: <DealsSection />,
@@ -35,21 +37,35 @@ const sectionMap: Record<SectionId, JSX.Element> = {
 export default function Dashboard() {
     const [activeSection, setActiveSection] = useState<SectionId>("overview");
     const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+    const [theme, setTheme] = useState<ThemeMode>(() => {
+        // Get theme from localStorage or default to dark
+        const stored = localStorage.getItem("dashboard-theme") as ThemeMode | null;
+        return stored || "dark";
+    });
+
+    useEffect(() => {
+        localStorage.setItem("dashboard-theme", theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === "dark" ? "light" : "dark");
+    };
 
     return (
-        <div className="analysis-reporting min-h-screen bg-background overflow-hidden">
+        <div className={`analysis-reporting ${theme} min-h-screen bg-background overflow-hidden`}>
             <Sidebar
                 activeSection={activeSection}
                 onSectionChange={setActiveSection}
                 collapsed={sidebarCollapsed}
                 onCollapsedChange={setSidebarCollapsed}
+                theme={theme}
+                onThemeToggle={toggleTheme}
             />
             <div
-                className={`flex flex-col h-screen transition-all duration-300 ease-out ${
-                    sidebarCollapsed ? "ml-[72px]" : "ml-[260px]"
-                }`}
+                className={`flex flex-col h-screen transition-all duration-300 ease-out ${sidebarCollapsed ? "ml-[72px]" : "ml-[260px]"
+                    }`}
             >
-                <Header activeSection={activeSection} />
+                <Header activeSection={activeSection} theme={theme} onThemeToggle={toggleTheme} />
                 <main className="flex-1 p-6 overflow-auto">
                     <div
                         key={activeSection}
