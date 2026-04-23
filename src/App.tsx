@@ -5,7 +5,6 @@ import { NewRestaurantRoute } from "@/routes/new-restaurant-route"
 import { PublicOrderingRoute } from "@/routes/public-ordering-route"
 import { PosRoute } from "@/routes/pos-route"
 import { PublicRestaurantsRoute } from "@/routes/public-restaurants-route"
-import RestaurantSelectorPage from "@/pages/restaurant-selector"
 import { DashboardRoute } from "@/routes/dashboard-route"
 import { Toaster } from "@/components/ui/sonner"
 import { HomeRoutes } from "@/routes/home-routes"
@@ -26,7 +25,7 @@ export function App() {
         {PosRoute()}
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         {NewRestaurantRoute()}
-        <Route path="/restaurants" element={<RestaurantSelectorPage />} />
+        <Route path="/restaurants" element={<Navigate to="/settings/manage/restaurants" replace />} />
         <Route path="/public/restaurants/:slug" element={<PublicRestaurantDetailsPage />} />
         {PublicRestaurantsRoute()}
         {PublicOrderingRoute()}
