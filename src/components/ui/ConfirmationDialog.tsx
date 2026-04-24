@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import Icon from '@/components/AppIcon';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 export interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ export interface ConfirmationDialogProps {
   cancelText?: string;
   variant?: 'default' | 'danger' | 'warning' | 'success';
   icon?: string;
+  isLoading?: boolean;
 }
 
 const variantStyles = {
@@ -48,6 +50,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   cancelText = 'Hủy',
   variant = 'default',
   icon = 'AlertCircle',
+  isLoading = false,
 }) => {
   if (!isOpen) return null;
 
@@ -93,11 +96,16 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border bg-secondary/30 rounded-b-xl">
-          <Button variant="outline" size="sm" onClick={onClose}>
+          <Button variant="outline" size="sm" onClick={onClose} disabled={isLoading}>
             {cancelText}
           </Button>
-          <Button variant={styles.confirmButton} size="sm" onClick={onConfirm}>
-            {confirmText}
+          <Button variant={styles.confirmButton} size="sm" onClick={onConfirm} disabled={isLoading}>
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="size-4" />
+                Đang xử lý...
+              </span>
+            ) : confirmText}
           </Button>
         </div>
       </div>

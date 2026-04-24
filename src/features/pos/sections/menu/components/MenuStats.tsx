@@ -4,7 +4,6 @@ import Icon from '@/components/AppIcon';
 interface MenuStatsData {
   total: number;
   available: number;
-  lowStock: number;
   unavailable: number;
 }
 
@@ -18,7 +17,6 @@ const formatNumber = (num: number): string =>
 const MenuStats: React.FC<MenuStatsProps> = ({ stats }) => {
   const statusItems = [
     { label: 'Sẵn sàng', value: stats.available, dotColor: 'bg-emerald-500' },
-    { label: 'Sắp hết', value: stats.lowStock, dotColor: 'bg-amber-500' },
     { label: 'Hết hàng', value: stats.unavailable, dotColor: 'bg-rose-500' },
   ];
 

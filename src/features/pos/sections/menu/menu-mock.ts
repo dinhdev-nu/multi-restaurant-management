@@ -1,0 +1,61 @@
+import type { MenuCategoryWithCount, MenuItem } from '@/types/menu-type';
+
+export const MENU_SECTION_MOCK_CATEGORIES: MenuCategoryWithCount[] = [
+  {
+    _id: 'mock-cat-1',
+    restaurant_id: 'mock-restaurant',
+    name: 'Món chính',
+    description: 'Món no và bán chạy',
+    image_url: null,
+    sort_order: 0,
+    is_active: true,
+    created_at: '2026-04-24T00:00:00.000Z',
+    updated_at: '2026-04-24T00:00:00.000Z',
+    item_count: 1,
+  },
+  {
+    _id: 'mock-cat-2',
+    restaurant_id: 'mock-restaurant',
+    name: 'Đồ uống',
+    description: 'Nước giải khát',
+    image_url: null,
+    sort_order: 1,
+    is_active: true,
+    created_at: '2026-04-24T00:00:00.000Z',
+    updated_at: '2026-04-24T00:00:00.000Z',
+    item_count: 1,
+  },
+];
+
+export const MENU_SECTION_MOCK_ITEMS: MenuItem[] = [
+  {
+    _id: 'mock-item-1',
+    restaurant_id: 'mock-restaurant',
+    category_id: 'mock-cat-1',
+    name: 'Cơm gà nướng',
+    description: 'Cơm gà nướng sốt tiêu đen',
+    base_price: 69000,
+    images: [],
+    is_available: true,
+    is_featured: true,
+    sort_order: 0,
+    deleted_at: null,
+    created_at: '2026-04-24T00:00:00.000Z',
+    updated_at: '2026-04-24T00:00:00.000Z',
+  },
+  {
+    _id: 'mock-item-2',
+    restaurant_id: 'mock-restaurant',
+    category_id: 'mock-cat-2',
+    name: 'Trà đào cam sả',
+    description: 'Trà đào tươi thanh mát',
+    base_price: 45000,
+    images: [],
+    is_available: true,
+    is_featured: false,
+    sort_order: 1,
+    deleted_at: null,
+    created_at: '2026-04-24T00:00:00.000Z',
+    updated_at: '2026-04-24T00:00:00.000Z',
+  },
+];

@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 interface Category {
   id: string;
   name: string;
-  icon?: string;
 }
 
 interface CategoryFilterProps {
@@ -14,6 +13,7 @@ interface CategoryFilterProps {
   onCategoryChange: (categoryId: string) => void;
   itemCounts?: Record<string, number>;
   onAddCategory: () => void;
+  onManageCategories: () => void;
 }
 
 const CategoryFilter: React.FC<CategoryFilterProps> = ({
@@ -22,6 +22,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
   onCategoryChange,
   itemCounts = {},
   onAddCategory,
+  onManageCategories,
 }) => {
   const allCount = Object.values(itemCounts).reduce((sum, count) => sum + count, 0);
   const getBadgeClass = (isSelected: boolean) =>
@@ -59,8 +60,6 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
             size="sm"
             onClick={() => onCategoryChange(category.id)}
             className="flex-shrink-0"
-            iconName={category.icon}
-            iconPosition="left"
           >
             <span>{category.name}</span>
             {count > 0 && (
@@ -81,6 +80,17 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
         onClick={onAddCategory}
       >
         Thêm danh mục
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="flex-shrink-0 text-muted-foreground"
+        iconName="Settings"
+        iconPosition="left"
+        onClick={onManageCategories}
+      >
+        Quản lý danh mục
       </Button>
     </div>
   );

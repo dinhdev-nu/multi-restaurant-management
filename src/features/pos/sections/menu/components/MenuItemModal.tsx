@@ -6,16 +6,16 @@ import Select from '../../../components/Select';
 import Image from '@/components/AppImage';
 
 type ItemStatus = 'available' | 'unavailable';
+type FeaturedStatus = 'normal' | 'featured';
 
 export interface MenuItemFormData {
   name: string;
   description: string;
   price: string;
   category: string;
-  image: string;
+  imageUrl: string;
   status: ItemStatus;
-  stock_quantity: string;
-  unit: string;
+  featured: FeaturedStatus;
 }
 
 interface Category {
@@ -26,12 +26,15 @@ interface Category {
 interface MenuItemModalProps {
   isOpen: boolean;
   isLoading?: boolean;
+  isEditing?: boolean;
   item?: MenuItemFormData | null;
+  imagePreviewUrl?: string;
   categories?: Category[];
   errors?: Partial<Record<keyof MenuItemFormData, string>>;
   onClose: () => void;
   onSave: (data: MenuItemFormData) => void;
   onFieldChange: (field: keyof MenuItemFormData, value: string) => void;
+  onImageFileChange: (file: File | null) => void;
 }
 
 type UploadMethod = 'upload' | 'url';
@@ -41,12 +44,9 @@ const STATUS_OPTIONS = [
   { value: 'unavailable', label: 'Hết hàng' },
 ];
 
-const UNIT_OPTIONS = [
-  { value: 'phần', label: 'Phần' },
-  { value: 'ly', label: 'Ly' },
-  { value: 'chai', label: 'Chai' },
-  { value: 'kg', label: 'Kg' },
-  { value: 'gram', label: 'Gram' },
+const FEATURED_OPTIONS = [
+  { value: 'normal', label: 'Bình thường' },
+  { value: 'featured', label: 'Nổi bật' },
 ];
 
 const SAMPLE_IMAGES = [
@@ -60,21 +60,23 @@ const DEFAULT_MENU_ITEM: MenuItemFormData = {
   description: '',
   price: '',
   category: '',
-  image: '',
+  imageUrl: '',
   status: 'available',
-  stock_quantity: '',
-  unit: 'phần',
+  featured: 'normal',
 };
 
 const MenuItemModal: React.FC<MenuItemModalProps> = ({
   isOpen,
   isLoading = false,
+  isEditing = false,
   item = null,
+  imagePreviewUrl = '',
   categories = [],
   errors = {},
   onClose,
   onSave,
   onFieldChange,
+  onImageFileChange,
 }) => {
   const [uploadMethod, setUploadMethod] = useState<UploadMethod>('upload');
 
@@ -86,12 +88,10 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => onFieldChange('image', reader.result as string);
-    reader.readAsDataURL(file);
+    onImageFileChange(file);
   };
 
-  const imagePreview = formData.image;
+  const imagePreview = imagePreviewUrl;
 
   return (
     <div className="fixed inset-0 z-1200 flex items-center justify-center overflow-hidden">
@@ -103,7 +103,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">
-            {item ? 'Chỉnh sửa món ăn' : 'Thêm món mới'}
+            {isEditing ? 'Chỉnh sửa món ăn' : 'Thêm món mới'}
           </h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <Icon name="X" size={20} />
@@ -156,32 +156,22 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Tồn kho"
-                  type="number"
-                  value={formData.stock_quantity}
-                  onChange={(e) => onFieldChange('stock_quantity', e.target.value)}
-                  error={errors.stock_quantity}
-                  placeholder="Số lượng"
-                  min="0"
+                <Select
+                  label="Trạng thái"
+                  options={STATUS_OPTIONS}
+                  value={formData.status}
+                  onChange={(event) => onFieldChange('status', event.target.value)}
+                  placeholder="Chọn trạng thái"
                 />
 
                 <Select
-                  label="Đơn vị"
-                  options={UNIT_OPTIONS}
-                  value={formData.unit}
-                  onChange={(event) => onFieldChange('unit', event.target.value)}
-                  placeholder="Chọn đơn vị"
+                  label="Hiển thị"
+                  options={FEATURED_OPTIONS}
+                  value={formData.featured}
+                  onChange={(event) => onFieldChange('featured', event.target.value)}
+                  placeholder="Chọn hiển thị"
                 />
               </div>
-
-              <Select
-                label="Trạng thái"
-                options={STATUS_OPTIONS}
-                value={formData.status}
-                onChange={(event) => onFieldChange('status', event.target.value)}
-                placeholder="Chọn trạng thái"
-              />
             </div>
 
             {/* Right Column - Image */}
@@ -195,8 +185,8 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
                     type="button"
                     onClick={() => setUploadMethod('upload')}
                     className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${uploadMethod === 'upload'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
                       }`}
                   >
                     <Icon name="Upload" size={16} className="inline mr-2" />
@@ -206,8 +196,8 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
                     type="button"
                     onClick={() => setUploadMethod('url')}
                     className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${uploadMethod === 'url'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
                       }`}
                   >
                     <Icon name="Link" size={16} className="inline mr-2" />
@@ -253,7 +243,10 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => onFieldChange('image', '')}
+                      onClick={() => {
+                        onImageFileChange(null);
+                        onFieldChange('imageUrl', '');
+                      }}
                       iconName="Trash2"
                       iconPosition="left"
                       className="w-full"
@@ -267,8 +260,8 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
                   <Input
                     label="URL hình ảnh"
                     type="url"
-                    value={formData.image}
-                    onChange={(e) => onFieldChange('image', e.target.value)}
+                    value={formData.imageUrl}
+                    onChange={(e) => onFieldChange('imageUrl', e.target.value)}
                     placeholder="https://example.com/image.jpg"
                   />
 
@@ -292,7 +285,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
                         <button
                           key={index}
                           type="button"
-                          onClick={() => onFieldChange('image', url)}
+                          onClick={() => onFieldChange('imageUrl', url)}
                           className="w-full h-16 rounded border border-border overflow-hidden hover:ring-2 hover:ring-primary transition-smooth"
                         >
                           <Image src={url} alt={`Sample ${index + 1}`} className="w-full h-full object-cover" />
@@ -318,7 +311,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
             iconName="Save"
             iconPosition="left"
           >
-            {item ? 'Cập nhật' : 'Thêm mới'}
+            {isEditing ? 'Cập nhật' : 'Thêm mới'}
           </Button>
         </div>
       </div>
