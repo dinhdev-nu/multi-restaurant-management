@@ -13,22 +13,31 @@ import {
     AttentionModal,
     CreateRestaurantBanner,
     FilterTabs,
-    MOCK_NEARBY_RESTAURANTS,
-    MOCK_POSTS,
     PostCard,
 } from "@/features/public/restaurants"
 import type { FeedFilter, FeedLocationSelection, FeedPost } from "@/features/public/restaurants"
+import { MOCK_PROVINCES } from "@/features/new/constants"
 import { PublicRestaurantsLayout } from "@/layouts/public/PublicRestaurantsLayout"
-import { logout as logoutApi } from "@/lib/api/auths"
+import { logout as logoutApi } from "@/services/auths"
+import { searchPublicRestaurants } from "@/services/restaurants"
+import { toAppError } from "@/services/error"
+import type { PublicRestaurantSearchItem } from "@/types/restaurant-type"
 import { useAuthStore } from "@/stores/auth-store"
 import { useUserStore } from "@/stores/user-store"
 
-const INITIAL_DISPLAY_COUNT = 3
-const LOAD_MORE_STEP = 3
+const PUBLIC_RESTAURANT_PAGE = 1
+const PUBLIC_RESTAURANT_LIMIT = 5
+const INITIAL_DISPLAY_COUNT = PUBLIC_RESTAURANT_LIMIT
+const LOAD_MORE_STEP = PUBLIC_RESTAURANT_LIMIT
 const LOAD_MORE_DELAY_MS = 300
 const ATTENTION_MODAL_DELAY_MS = 3000
 const ATTENTION_MODAL_STORAGE_KEY = "hasSeenAttentionModal"
 const FAB_SCROLL_THRESHOLD = 200
+const DEFAULT_PROVINCE = MOCK_PROVINCES[0] ?? { code: 1, name: "Hà Nội" }
+
+const FEED_TYPES: Exclude<FeedFilter, "all">[] = ["promotion", "new_menu", "feedback", "event", "experience"]
+const FEED_TIMESTAMPS = ["1 giờ trước", "3 giờ trước", "5 giờ trước", "8 giờ trước", "12 giờ trước"]
+const FALLBACK_RESTAURANT_IMAGE = "/assets/home/image.png"
 
 const TRENDING_TOPICS = [
     { tag: "#BuffetNướng", posts: "2.4K bài viết" },
@@ -38,6 +47,85 @@ const TRENDING_TOPICS = [
     { tag: "#PhởHàNội", posts: "784 bài viết" },
 ]
 
+function formatDistance(distanceKm?: number | null) {
+    if (distanceKm === null || distanceKm === undefined) return "Đang cập nhật"
+    if (distanceKm < 1) return `${Math.round(distanceKm * 1000)} m`
+    return `${distanceKm.toFixed(1)} km`
+}
+
+function buildFeedContent(restaurant: PublicRestaurantSearchItem, type: Exclude<FeedFilter, "all">) {
+    const cuisine = restaurant.cuisine_type ?? "món đặc trưng"
+    const location = [restaurant.district, restaurant.city].filter(Boolean).join(", ") || restaurant.city
+
+    switch (type) {
+        case "promotion":
+            return `Khám phá ưu đãi nổi bật tại ${restaurant.name} với ${cuisine}. Đặt bàn sớm để giữ chỗ đẹp và nhận ưu đãi tốt hơn.`
+        case "new_menu":
+            return `${restaurant.name} vừa cập nhật thực đơn mới với các món ${cuisine}. Thử ngay lựa chọn phù hợp cho bữa trưa hoặc buổi tối.`
+        case "feedback":
+            return `Khách hàng tại ${location} đang đánh giá cao ${restaurant.name} vì chất lượng món ăn và không gian phục vụ ổn định.`
+        case "event":
+            return `Sự kiện ẩm thực tại ${restaurant.name} đang thu hút nhiều lượt quan tâm. Đây là điểm dừng chân đáng thử cho cuối tuần.`
+        case "experience":
+            return `Một địa điểm đáng lưu lại ở ${location}: ${restaurant.name} phù hợp cho trải nghiệm ăn uống nhanh, gọn và dễ đặt online.`
+    }
+}
+
+function mapRestaurantToPost(
+    restaurant: PublicRestaurantSearchItem,
+    index: number,
+    provinceCode: number,
+    districtCode: number | null
+): FeedPost {
+    const type = FEED_TYPES[index % FEED_TYPES.length]
+    const image = restaurant.cover_image_url ?? restaurant.logo_url ?? FALLBACK_RESTAURANT_IMAGE
+    const tags = [
+        restaurant.cuisine_type,
+        restaurant.accepts_online_orders ? "dat-online" : "tai-quan",
+        restaurant.price_range ? `hang-${restaurant.price_range}` : null,
+    ].filter((tag): tag is string => Boolean(tag))
+
+    return {
+        id: restaurant._id,
+        type,
+        restaurant: {
+            name: restaurant.name,
+            avatar: image,
+            verified: Boolean(restaurant.logo_url || restaurant.cover_image_url),
+            location: [restaurant.district, restaurant.city].filter(Boolean).join(", ") || restaurant.city,
+            provinceCode,
+            districtCode: districtCode ?? undefined,
+        },
+        timestamp: FEED_TIMESTAMPS[index % FEED_TIMESTAMPS.length],
+        content: buildFeedContent(restaurant, type),
+        tags,
+        images: restaurant.cover_image_url ? [restaurant.cover_image_url] : restaurant.logo_url ? [restaurant.logo_url] : undefined,
+        liked: false,
+        bookmarked: false,
+        likes: 400 + index * 87,
+        comments: 24 + index * 5,
+        shares: 9 + index * 3,
+    }
+}
+
+function mapRestaurantToNearby(
+    restaurant: PublicRestaurantSearchItem,
+    index: number,
+    provinceCode: number,
+    districtCode: number | null
+) {
+    return {
+        id: restaurant._id,
+        name: restaurant.name,
+        image: restaurant.logo_url ?? restaurant.cover_image_url ?? FALLBACK_RESTAURANT_IMAGE,
+        rating: Number((4.4 + ((index + 1) % 5) * 0.1).toFixed(1)),
+        distance: formatDistance(restaurant.distance_km),
+        verified: Boolean(restaurant.logo_url || restaurant.cover_image_url),
+        provinceCode,
+        districtCode: districtCode ?? undefined,
+    }
+}
+
 export default function PublicRestaurantsPage() {
     const navigate = useNavigate()
     const clearAuth = useAuthStore((state) => state.clearAuth)
@@ -45,12 +133,16 @@ export default function PublicRestaurantsPage() {
     const profile = useUserStore((state) => state.profile)
 
     const [activeFilter, setActiveFilter] = useState<FeedFilter>("all")
-    const [posts, setPosts] = useState<FeedPost[]>(() => MOCK_POSTS)
     const [selectedLocation, setSelectedLocation] = useState<FeedLocationSelection | null>(null)
+    const [restaurants, setRestaurants] = useState<PublicRestaurantSearchItem[]>([])
+    const [posts, setPosts] = useState<FeedPost[]>([])
     const [displayCount, setDisplayCount] = useState<number>(INITIAL_DISPLAY_COUNT)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const [showFAB, setShowFAB] = useState(false)
     const [isAttentionModalOpen, setIsAttentionModalOpen] = useState(false)
+    const [isRestaurantsLoading, setIsRestaurantsLoading] = useState(true)
+    const [restaurantsError, setRestaurantsError] = useState<string | null>(null)
+    const [restaurantsErrorMeta, setRestaurantsErrorMeta] = useState<{ code?: string; status?: number } | null>(null)
 
     const loadMoreRef = useRef<HTMLDivElement | null>(null)
     const loadMoreTimeoutRef = useRef<number | null>(null)
@@ -76,6 +168,53 @@ export default function PublicRestaurantsPage() {
     useEffect(() => {
         setDisplayCount(INITIAL_DISPLAY_COUNT)
     }, [activeFilter, selectedLocation])
+
+    useEffect(() => {
+        let isActive = true
+
+        const loadRestaurants = async () => {
+            try {
+                setIsRestaurantsLoading(true)
+                setRestaurantsError(null)
+                setRestaurantsErrorMeta(null)
+
+                const response = await searchPublicRestaurants({
+                    page: PUBLIC_RESTAURANT_PAGE,
+                    limit: PUBLIC_RESTAURANT_LIMIT,
+                })
+
+                if (!isActive) return
+
+                const provinceCode = DEFAULT_PROVINCE.code
+                const districtCode = null
+
+                setRestaurants(response.data)
+                setPosts(
+                    response.data.map((restaurant, index) =>
+                        mapRestaurantToPost(restaurant, index, provinceCode, districtCode)
+                    )
+                )
+            } catch (caughtError) {
+                if (!isActive) return
+
+                const appError = toAppError(caughtError, "Không thể tải nhà hàng công khai.")
+                setRestaurants([])
+                setPosts([])
+                setRestaurantsError(appError.message)
+                setRestaurantsErrorMeta({ code: appError.errorCode, status: appError.status })
+            } finally {
+                if (isActive) {
+                    setIsRestaurantsLoading(false)
+                }
+            }
+        }
+
+        loadRestaurants()
+
+        return () => {
+            isActive = false
+        }
+    }, [])
 
     useEffect(() => {
         const handleScroll = () => {
@@ -130,16 +269,8 @@ export default function PublicRestaurantsPage() {
     }, [clearAuth, clearUser, navigate])
 
     const filteredByLocationPosts = useMemo(() => {
-        if (!selectedLocation) return posts
-
-        const { province, district } = selectedLocation
-
-        return posts.filter((post) => {
-            if (post.restaurant.provinceCode !== province.code) return false
-            if (!district) return true
-            return post.restaurant.districtCode === district.code
-        })
-    }, [posts, selectedLocation])
+        return posts
+    }, [posts])
 
     const filteredPosts = useMemo(() => {
         if (activeFilter === "all") return filteredByLocationPosts
@@ -151,16 +282,15 @@ export default function PublicRestaurantsPage() {
     }, [displayCount, filteredPosts])
 
     const nearbyRestaurants = useMemo(() => {
-        if (!selectedLocation) return MOCK_NEARBY_RESTAURANTS
+        if (!restaurants.length) return []
 
-        const { province, district } = selectedLocation
+        const provinceCode = selectedLocation?.province.code ?? DEFAULT_PROVINCE.code
+        const districtCode = selectedLocation?.district?.code ?? null
 
-        return MOCK_NEARBY_RESTAURANTS.filter((restaurant) => {
-            if (restaurant.provinceCode !== province.code) return false
-            if (!district) return true
-            return restaurant.districtCode === district.code
-        })
-    }, [selectedLocation])
+        return restaurants.slice(0, 4).map((restaurant, index) =>
+            mapRestaurantToNearby(restaurant, index, provinceCode, districtCode)
+        )
+    }, [restaurants, selectedLocation])
 
     const remainingPostsCount = filteredPosts.length - displayedPosts.length
     const hasMorePosts = remainingPostsCount > 0
@@ -232,7 +362,14 @@ export default function PublicRestaurantsPage() {
                                     </button>
                                 </div>
                                 <div className="space-y-3">
-                                    {nearbyRestaurants.map((restaurant) => (
+                                    {isRestaurantsLoading && nearbyRestaurants.length === 0 && (
+                                        <div className="space-y-3">
+                                            <div className="h-16 rounded-xl bg-muted/40 animate-pulse" />
+                                            <div className="h-16 rounded-xl bg-muted/40 animate-pulse" />
+                                            <div className="h-16 rounded-xl bg-muted/40 animate-pulse" />
+                                        </div>
+                                    )}
+                                    {!isRestaurantsLoading && nearbyRestaurants.map((restaurant) => (
                                         <div
                                             key={restaurant.id}
                                             className="flex cursor-pointer items-center space-x-3 rounded-xl p-2 transition-colors hover:bg-secondary"
@@ -263,6 +400,9 @@ export default function PublicRestaurantsPage() {
                                             </div>
                                         </div>
                                     ))}
+                                    {!isRestaurantsLoading && nearbyRestaurants.length === 0 && (
+                                        <p className="text-sm text-muted-foreground">Không tìm thấy nhà hàng phù hợp.</p>
+                                    )}
                                 </div>
                             </div>
 
@@ -284,19 +424,32 @@ export default function PublicRestaurantsPage() {
                     <main className="lg:col-span-6">
                         <FilterTabs activeFilter={activeFilter} onFilterChange={setActiveFilter} />
 
+                        {restaurantsError && (
+                            <div className="mb-4 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive space-y-2">
+                                <div className="font-medium">{restaurantsError}</div>
+                                {restaurantsErrorMeta && (restaurantsErrorMeta.status || restaurantsErrorMeta.code) && (
+                                    <div className="text-xs text-destructive/80">
+                                        {restaurantsErrorMeta.status ? `HTTP ${restaurantsErrorMeta.status}` : ""}
+                                        {restaurantsErrorMeta.status && restaurantsErrorMeta.code ? " • " : ""}
+                                        {restaurantsErrorMeta.code ?? ""}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="space-y-6">
                             {displayedPosts.map((post) => (
                                 <PostCard key={post.id} post={post} onLike={handleLike} onBookmark={handleBookmark} />
                             ))}
                         </div>
 
-                        {displayedPosts.length === 0 && (
+                        {!isRestaurantsLoading && displayedPosts.length === 0 && !restaurantsError && (
                             <div className="py-20 text-center">
                                 <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-secondary">
                                     <Search className="h-12 w-12 text-muted-foreground" />
                                 </div>
-                                <h3 className="mb-2 text-xl font-semibold text-foreground">Không có bài viết</h3>
-                                <p className="text-muted-foreground">Chưa có bài viết nào trong danh mục này</p>
+                                <h3 className="mb-2 text-xl font-semibold text-foreground">Không có nhà hàng</h3>
+                                <p className="text-muted-foreground">Chưa tìm thấy nhà hàng nào phù hợp với bộ lọc hiện tại</p>
                             </div>
                         )}
 
@@ -340,7 +493,7 @@ export default function PublicRestaurantsPage() {
 
                         {displayedPosts.length > 0 && !hasMorePosts && (
                             <div className="py-8 text-center">
-                                <p className="text-sm text-muted-foreground">🎉 Bạn đã xem hết tất cả bài viết</p>
+                                <p className="text-sm text-muted-foreground">🎉 Bạn đã xem hết tất cả nhà hàng trong danh sách này</p>
                             </div>
                         )}
                     </main>

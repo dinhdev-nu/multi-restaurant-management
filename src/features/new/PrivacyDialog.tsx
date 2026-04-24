@@ -7,7 +7,7 @@ import { weekDays } from './constants';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ShieldCheck, Lock, Edit3, Store, ArrowRight, Sparkles } from 'lucide-react';
+import { ShieldCheck, Lock, Edit3, Store, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { RestaurantDTO } from './constants';
 
@@ -23,7 +23,9 @@ interface PreviewPanelProps {
 
 interface CommitmentPanelProps {
     onBack: () => void;
-    onSubmit: () => void;
+    onSubmit: () => Promise<void>;
+    isSubmitting: boolean;
+    isUploadingAssets: boolean;
 }
 
 interface PreviewFieldProps {
@@ -193,7 +195,9 @@ function PreviewPanel({ formData, logoPreview }: PreviewPanelProps) {
     );
 }
 
-function CommitmentPanel({ onBack, onSubmit }: CommitmentPanelProps) {
+function CommitmentPanel({ onBack, onSubmit, isSubmitting, isUploadingAssets }: CommitmentPanelProps) {
+    const isBusy = isSubmitting || isUploadingAssets;
+
     return (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
             <div className="border-b border-border/80 px-6 pt-6 pb-4 sm:px-8 sm:pt-8 sm:pb-5">
@@ -247,11 +251,32 @@ function CommitmentPanel({ onBack, onSubmit }: CommitmentPanelProps) {
 
             <div className="sticky bottom-0 shrink-0 border-t border-border/80 bg-background/95 px-6 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] backdrop-blur-sm sm:px-8 sm:pt-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-                    <Button type="button" variant="ghost" onClick={onBack} className="w-full sm:w-auto font-medium">
+                    <Button type="button" variant="ghost" onClick={onBack} className="w-full sm:w-auto font-medium" disabled={isBusy}>
                         Quay lại chỉnh sửa
                     </Button>
-                    <Button type="button" onClick={onSubmit} className="w-full sm:w-auto bg-foreground text-background hover:bg-foreground/90 font-bold px-6 shadow-xl">
-                        Tạo hồ sơ số <ArrowRight className="size-4 ml-2" />
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            void onSubmit();
+                        }}
+                        disabled={isBusy}
+                        className="w-full sm:w-auto bg-foreground text-background hover:bg-foreground/90 font-bold px-6 shadow-xl"
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="size-4 mr-2 animate-spin" />
+                                Đang tạo hồ sơ...
+                            </>
+                        ) : isUploadingAssets ? (
+                            <>
+                                <Loader2 className="size-4 mr-2 animate-spin" />
+                                Đang tải ảnh...
+                            </>
+                        ) : (
+                            <>
+                                Tạo hồ sơ số <ArrowRight className="size-4 ml-2" />
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
@@ -261,7 +286,7 @@ function CommitmentPanel({ onBack, onSubmit }: CommitmentPanelProps) {
 
 export function PrivacyDialog({ open, onOpenChange }: PrivacyDialogProps) {
     const { formData } = useCreateRestaurantState();
-    const { logoPreview } = useCreateRestaurantMeta();
+    const { logoPreview, isSubmitting, isUploadingAssets } = useCreateRestaurantMeta();
     const { submit } = useCreateRestaurantActions();
 
     return (
@@ -273,6 +298,8 @@ export function PrivacyDialog({ open, onOpenChange }: PrivacyDialogProps) {
                     <CommitmentPanel
                         onBack={() => onOpenChange(false)}
                         onSubmit={submit}
+                        isSubmitting={isSubmitting}
+                        isUploadingAssets={isUploadingAssets}
                     />
 
                 </div>

@@ -3,7 +3,7 @@ import NotFoundPage from "@/pages/not-found/NotFoundPage"
 import OAuthCallbackPage from "@/pages/oauth-callback/OauthCallback"
 import { NewRestaurantRoute } from "@/routes/new-restaurant-route"
 import { PublicOrderingRoute } from "@/routes/public-ordering-route"
-import { PosRoute } from "@/routes/pos-route"
+import { POS_BASE_PATH, POS_DEFAULT_SLUG, PosRoute } from "@/routes/pos-route"
 import { PublicRestaurantsRoute } from "@/routes/public-restaurants-route"
 import { DashboardRoute } from "@/routes/dashboard-route"
 import { Toaster } from "@/components/ui/sonner"
@@ -22,6 +22,7 @@ export function App() {
         {SettingRoutes()}
         <Route path="/profile/*" element={<Navigate to={SETTINGS_DEFAULT_PATH} replace />} />
         {DashboardRoute()}
+        <Route path={POS_BASE_PATH} element={<Navigate to={`${POS_BASE_PATH}/${POS_DEFAULT_SLUG}`} replace />} />
         {PosRoute()}
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         {NewRestaurantRoute()}

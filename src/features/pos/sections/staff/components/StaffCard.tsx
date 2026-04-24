@@ -1,25 +1,22 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
 import { cn } from '@/lib/utils';
 import Button from '../../../components/Button';
 
-type StaffStatus = 'active' | 'on-break' | 'inactive';
-type StaffRole = 'owner' | 'manager' | 'cashier' | 'kitchen' | 'waiter' | 'cleaner';
+type StaffStatus = 'active' | 'inactive' | 'on_leave' | 'terminated';
+type StaffRole = 'manager' | 'cashier' | 'waiter' | 'kitchen' | 'delivery';
 
 export interface Staff {
   _id: string;
+  restaurantId?: string;
+  userId?: string;
   name: string;
   avatar?: string;
   employeeId?: string;
   phone: string;
   email: string;
-  shift: string;
-  workingHours?: string;
-  ordersToday?: number;
   joinDate?: string;
-  address?: string;
-  notes?: string;
   role: StaffRole;
   roleDisplay: string;
   status: StaffStatus;
@@ -28,8 +25,6 @@ export interface Staff {
 
 interface StaffCardProps {
   staff: Staff;
-  ordersToday: number;
-  workedDisplay: string;
   onEdit: (staff: Staff) => void;
   onToggleStatus: (staff: Staff) => void;
   onViewDetails: (staff: Staff) => void;
@@ -40,27 +35,30 @@ interface StaffCardProps {
 
 const STATUS_COLOR: Record<StaffStatus, string> = {
   'active': 'text-success',
-  'on-break': 'text-warning',
-  'inactive': 'text-error',
+  'inactive': 'text-muted-foreground',
+  'on_leave': 'text-warning',
+  'terminated': 'text-error',
 };
 
 const STATUS_BG: Record<StaffStatus, string> = {
   'active': 'bg-success/10',
-  'on-break': 'bg-warning/10',
-  'inactive': 'bg-error/10',
+  'inactive': 'bg-muted',
+  'on_leave': 'bg-warning/10',
+  'terminated': 'bg-error/10',
 };
 
 const STATUS_DOT: Record<StaffStatus, string> = {
   'active': 'bg-success',
-  'on-break': 'bg-warning',
-  'inactive': 'bg-error',
+  'inactive': 'bg-muted-foreground',
+  'on_leave': 'bg-warning',
+  'terminated': 'bg-error',
 };
 
 const ROLE_COLOR: Record<string, string> = {
-  owner: 'bg-primary text-primary-foreground',
   manager: 'bg-accent text-accent-foreground',
   cashier: 'bg-secondary text-secondary-foreground',
   kitchen: 'bg-success text-success-foreground',
+  delivery: 'bg-primary text-primary-foreground',
 };
 
 const getRoleColor = (role: string): string =>
@@ -70,8 +68,6 @@ const getRoleColor = (role: string): string =>
 
 const StaffCard = memo<StaffCardProps>(({
   staff,
-  ordersToday,
-  workedDisplay,
   onEdit,
   onToggleStatus,
   onViewDetails,
@@ -131,19 +127,7 @@ const StaffCard = memo<StaffCardProps>(({
       </div>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Icon name="Calendar" size={14} />
-        <span>Ca: {staff.shift}</span>
-      </div>
-    </div>
-
-    {/* Performance Stats */}
-    <div className="grid grid-cols-2 gap-4 mb-4">
-      <div className="text-center">
-        <p className="text-lg font-semibold text-card-foreground">{ordersToday}</p>
-        <p className="text-xs text-muted-foreground">Đơn hôm nay</p>
-      </div>
-      <div className="text-center">
-        <p className="text-lg font-semibold text-card-foreground">{workedDisplay}</p>
-        <p className="text-xs text-muted-foreground">Giờ làm việc</p>
+        <span>Ngày vào làm: {staff.joinDate ? new Date(staff.joinDate).toLocaleDateString('vi-VN') : '---'}</span>
       </div>
     </div>
 
@@ -157,7 +141,7 @@ const StaffCard = memo<StaffCardProps>(({
         iconName={staff.status === 'active' ? 'Pause' : 'Play'}
         iconPosition="left"
       >
-        {staff.status === 'active' ? 'Tạm nghỉ' : 'Kích hoạt'}
+        {staff.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'}
       </Button>
       <Button
         variant="default"

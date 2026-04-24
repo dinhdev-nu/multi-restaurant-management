@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
-import { checkEmail, register, resendEmailOtp, verifyEmailOtp } from "@/lib/api/auths"
-import { toAppError } from "@/lib/api/error"
+import { checkEmail, register, resendEmailOtp, verifyEmailOtp } from "@/services/auths"
+import { toAppError } from "@/services/error"
 
 type Step = "info" | "password" | "otp"
 

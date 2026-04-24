@@ -1,228 +1,411 @@
-import { useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import {
+    ArrowLeft,
+    Building2,
+    Clock3,
+    Globe,
+    MapPin,
+    Phone,
+    Share2,
+    Store,
+} from "lucide-react"
+import { useNavigate, useParams } from "react-router-dom"
+
+import AppImage from "@/components/AppImage"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { PublicRestaurantsLayout } from "@/layouts/public/PublicRestaurantsLayout"
+import { logout as logoutApi } from "@/services/auths"
+import { toAppError } from "@/services/error"
+import { getPublicRestaurantBySlug } from "@/services/restaurants"
+import { useAuthStore } from "@/stores/auth-store"
+import { useUserStore } from "@/stores/user-store"
+import type { DayKey, PublicRestaurantDetail } from "@/types/restaurant-type"
+
+const FALLBACK_RESTAURANT_IMAGE = "/assets/home/image.png"
+
+const DAY_LABELS: Record<DayKey, string> = {
+    mon: "Thứ 2",
+    tue: "Thứ 3",
+    wed: "Thứ 4",
+    thu: "Thứ 5",
+    fri: "Thứ 6",
+    sat: "Thứ 7",
+    sun: "Chủ nhật",
+}
+
+const MOCK_PUBLIC_RESTAURANT_DETAIL: PublicRestaurantDetail = {
+    _id: "mock-public-restaurant-detail",
+    name: "Gigi Garden Bistro",
+    slug: "gigi-garden-bistro",
+    description:
+        "Không gian ấm cúng theo phong cách sân vườn, nổi bật với thực đơn fusion Việt - Âu và các set tối theo mùa.",
+    cuisine_type: "Fusion Việt - Âu",
+    price_range: 3,
+    logo_url: "/assets/home/image.png",
+    cover_image_url: "/assets/home/image.png",
+    gallery_urls: ["/assets/home/image.png"],
+    address: "129 Nguyễn Trãi",
+    city: "Hà Nội",
+    district: "Thanh Xuân",
+    ward: "Thượng Đình",
+    latitude: 21.002121,
+    longitude: 105.815062,
+    location: {
+        type: "Point",
+        coordinates: [105.815062, 21.002121],
+    },
+    phone: "0901 234 567",
+    email: "hello@gigigarden.vn",
+    website: "https://gigigarden.vn",
+    operating_hours: {
+        mon: { closed: false, open: "10:00", close: "22:00" },
+        tue: { closed: false, open: "10:00", close: "22:00" },
+        wed: { closed: false, open: "10:00", close: "22:00" },
+        thu: { closed: false, open: "10:00", close: "22:00" },
+        fri: { closed: false, open: "10:00", close: "23:00" },
+        sat: { closed: false, open: "09:00", close: "23:00" },
+        sun: { closed: false, open: "09:00", close: "22:00" },
+    },
+    timezone: "Asia/Ho_Chi_Minh",
+    currency: "VND",
+    tax_rate: 8,
+    service_charge_rate: 5,
+    is_published: true,
+    accepts_online_orders: true,
+    deleted_at: null,
+    created_at: "2026-03-11T03:15:24.000Z",
+    updated_at: "2026-04-18T09:42:05.000Z",
+}
+
+function formatPriceRange(priceRange: PublicRestaurantDetail["price_range"]) {
+    if (!priceRange) return "Đang cập nhật"
+    return "$".repeat(priceRange)
+}
+
+function formatOperatingHour(day: PublicRestaurantDetail["operating_hours"][DayKey]) {
+    if (day.closed) return "Đóng cửa"
+    return `${day.open} - ${day.close}`
+}
+
+function getStatusBadgeClass(isPublished: boolean) {
+    return isPublished
+        ? "border-emerald-300/80 bg-emerald-500/90 text-white hover:bg-emerald-500"
+        : "border-amber-300/80 bg-amber-500/90 text-white hover:bg-amber-500"
+}
+
+function resolveTodayKey() {
+    const jsDay = new Date().getDay()
+
+    switch (jsDay) {
+        case 0:
+            return "sun"
+        case 1:
+            return "mon"
+        case 2:
+            return "tue"
+        case 3:
+            return "wed"
+        case 4:
+            return "thu"
+        case 5:
+            return "fri"
+        default:
+            return "sat"
+    }
+}
 
 export default function PublicRestaurantDetailsPage() {
-    const [isMenuOpen, setIsMenuOpen] = useState(false)
-    const [isShareOpen, setIsShareOpen] = useState(false)
+    const { slug } = useParams<{ slug: string }>()
+    const navigate = useNavigate()
+    const clearAuth = useAuthStore((state) => state.clearAuth)
+    const clearUser = useUserStore((state) => state.clear)
+    const profile = useUserStore((state) => state.profile)
 
-    const handleCopyLink = async () => {
+    const [restaurant, setRestaurant] = useState<PublicRestaurantDetail | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [isLinkCopied, setIsLinkCopied] = useState(false)
+
+    const handleLogout = useCallback(async () => {
+        try {
+            await logoutApi()
+        } catch (caughtError) {
+            console.error("Logout error:", caughtError)
+        } finally {
+            clearAuth()
+            clearUser()
+            navigate("/auth", { replace: true })
+        }
+    }, [clearAuth, clearUser, navigate])
+
+    useEffect(() => {
+        let isActive = true
+
+        const loadRestaurant = async () => {
+            try {
+                setIsLoading(true)
+                setError(null)
+
+                if (!slug) {
+                    setRestaurant(MOCK_PUBLIC_RESTAURANT_DETAIL)
+                    return
+                }
+
+                const response = await getPublicRestaurantBySlug(slug)
+                if (!isActive) return
+
+                setRestaurant(response)
+            } catch (caughtError) {
+                if (!isActive) return
+
+                const appError = toAppError(caughtError, "Không thể tải chi tiết nhà hàng.")
+                setError(appError.message)
+                setRestaurant({
+                    ...MOCK_PUBLIC_RESTAURANT_DETAIL,
+                    slug: slug ?? MOCK_PUBLIC_RESTAURANT_DETAIL.slug,
+                })
+            } finally {
+                if (isActive) {
+                    setIsLoading(false)
+                }
+            }
+        }
+
+        loadRestaurant()
+
+        return () => {
+            isActive = false
+        }
+    }, [slug])
+
+    const detail = restaurant ?? MOCK_PUBLIC_RESTAURANT_DETAIL
+
+    const fullAddress = useMemo(() => {
+        return [detail.address, detail.ward, detail.district, detail.city].filter(Boolean).join(", ")
+    }, [detail.address, detail.city, detail.district, detail.ward])
+
+    const galleryImages = useMemo(() => {
+        return Array.from(
+            new Set(
+                [detail.cover_image_url, detail.logo_url, ...detail.gallery_urls].filter(
+                    (image): image is string => Boolean(image)
+                )
+            )
+        )
+    }, [detail.cover_image_url, detail.gallery_urls, detail.logo_url])
+
+    const todayKey = resolveTodayKey()
+    const todayHour = detail.operating_hours[todayKey]
+
+    const handleCopyLink = useCallback(async () => {
         try {
             await navigator.clipboard.writeText(window.location.href)
-        } catch (err) {
-            console.error("Failed to copy link:", err)
+            setIsLinkCopied(true)
+            window.setTimeout(() => setIsLinkCopied(false), 1400)
+        } catch (caughtError) {
+            console.error("Failed to copy link:", caughtError)
         }
-    }
+    }, [])
+
+    const handleOrderByPhone = useCallback(() => {
+        if (!detail.phone) return
+        window.location.href = `tel:${detail.phone.replace(/\s+/g, "")}`
+    }, [detail.phone])
 
     return (
-        <div className="min-h-screen bg-gray-100 relative overflow-hidden">
-            {/* Top Navigation */}
-            <div className="absolute top-8 left-8 z-20">
-                <button
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="text-gray-600 text-sm font-medium tracking-wider hover:text-gray-800 transition-colors"
-                >
-                    MENU
-                </button>
-            </div>
-
-            <div className="absolute top-8 right-8 z-20">
-                <button
-                    onClick={() => setIsShareOpen(!isShareOpen)}
-                    className="text-gray-600 text-sm font-medium tracking-wider hover:text-gray-800 transition-colors"
-                >
-                    SHARE
-                </button>
-            </div>
-
-            {isShareOpen && (
-                <div className="fixed inset-0 bg-gray-100/95 backdrop-blur-sm z-30 flex items-center justify-center">
-                    <div className="max-w-md w-full px-8">
-                        <div className="space-y-12">
-                            {/* Close button */}
-                            <div className="flex justify-between items-center">
-                                <h2 className="text-2xl font-bold text-gray-800 tracking-wider">SHARE</h2>
-                                <button onClick={() => setIsShareOpen(false)} className="text-gray-600 hover:text-gray-800 text-2xl">
-                                    ✕
-                                </button>
-                            </div>
-
-                            {/* Share Options */}
-                            <div className="space-y-6">
-                                <button
-                                    onClick={() =>
-                                        window.open(
-                                            `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}`,
-                                            "_blank",
-                                        )
-                                    }
-                                    className="w-full text-left border-b border-gray-300 pb-4 hover:border-gray-400 transition-colors group"
+        <PublicRestaurantsLayout
+            user={profile}
+            onLogout={handleLogout}
+            showCreateFab={false}
+            onOpenAttentionModal={() => undefined}
+        >
+            <div className="space-y-4 pb-24 lg:pb-6">
+                <Card className="sticky top-20 z-30 border border-border bg-card/95 shadow-sm backdrop-blur-sm">
+                    <CardContent className="p-3 sm:p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="lg"
+                                    onClick={() => navigate("/public/restaurants")}
                                 >
-                                    <h3 className="text-lg font-medium text-gray-800 tracking-wide mb-1 group-hover:text-gray-900">
-                                        Broadcast
-                                    </h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">→ Twitter</p>
-                                </button>
-
-                                <button
-                                    onClick={() =>
-                                        window.open(
-                                            `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
-                                            "_blank",
-                                        )
-                                    }
-                                    className="w-full text-left border-b border-gray-300 pb-4 hover:border-gray-400 transition-colors group"
-                                >
-                                    <h3 className="text-lg font-medium text-gray-800 tracking-wide mb-1 group-hover:text-gray-900">
-                                        Upload to Grid
-                                    </h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">→ LinkedIn</p>
-                                </button>
-
-                                <button
-                                    onClick={() =>
-                                        window.open(
-                                            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
-                                            "_blank",
-                                        )
-                                    }
-                                    className="w-full text-left border-b border-gray-300 pb-4 hover:border-gray-400 transition-colors group"
-                                >
-                                    <h3 className="text-lg font-medium text-gray-800 tracking-wide mb-1 group-hover:text-gray-900">
-                                        Echo in Void
-                                    </h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">→ Facebook</p>
-                                </button>
-
-                                <button
+                                    <ArrowLeft className="h-4 w-4" />
+                                    Danh sách
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="lg"
                                     onClick={handleCopyLink}
-                                    className="w-full text-left pb-4 hover:text-gray-900 transition-colors group"
                                 >
-                                    <h3 className="text-lg font-medium text-gray-800 tracking-wide mb-1 group-hover:text-gray-900">
-                                        Replicate Signal
-                                    </h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">→ Copy Link</p>
-                                </button>
+                                    <Share2 className="h-4 w-4" />
+                                    {isLinkCopied ? "Đã sao chép" : "Chia sẻ"}
+                                </Button>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="lg"
+                                    onClick={handleOrderByPhone}
+                                    disabled={!detail.phone}
+                                >
+                                    <Phone className="h-4 w-4" />
+                                    Gọi đặt món
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="lg"
+                                    disabled={!detail.accepts_online_orders}
+                                >
+                                    <Store className="h-4 w-4" />
+                                    {detail.accepts_online_orders ? "Đặt món online" : "Chưa hỗ trợ online"}
+                                </Button>
                             </div>
                         </div>
-                    </div>
-                </div>
-            )}
+                    </CardContent>
+                </Card>
 
-            {isMenuOpen && (
-                <div className="fixed inset-0 bg-gray-100/95 backdrop-blur-sm z-30 flex items-center justify-center">
-                    <div className="max-w-2xl w-full px-8">
-                        <div className="space-y-12">
-                            {/* Close button */}
-                            <div className="flex justify-between items-center">
-                                <h2 className="text-2xl font-bold text-gray-800 tracking-wider">NAVIGATION</h2>
-                                <button onClick={() => setIsMenuOpen(false)} className="text-gray-600 hover:text-gray-800 text-2xl">
-                                    ✕
-                                </button>
-                            </div>
+                {error && (
+                    <section className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                        {error} Hiện đang hiển thị dữ liệu mẫu để tiếp tục trải nghiệm giao diện.
+                    </section>
+                )}
 
-                            {/* Menu Items */}
-                            <div className="space-y-8">
-                                <div className="border-b border-gray-300 pb-6">
-                                    <h3 className="text-xl font-medium text-gray-800 tracking-wide mb-2">Vision</h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">overview, philosophy, the big idea</p>
-                                </div>
-
-                                <div className="border-b border-gray-300 pb-6">
-                                    <h3 className="text-xl font-medium text-gray-800 tracking-wide mb-2">System</h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">methodology, process, frameworks</p>
-                                </div>
-
-                                <div className="border-b border-gray-300 pb-6">
-                                    <h3 className="text-xl font-medium text-gray-800 tracking-wide mb-2">Archive</h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">past projects, experiments, case studies</p>
-                                </div>
-
-                                <div className="border-b border-gray-300 pb-6">
-                                    <h3 className="text-xl font-medium text-gray-800 tracking-wide mb-2">Matter</h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">resources, tools, downloads</p>
-                                </div>
-
-                                <div className="border-b border-gray-300 pb-6">
-                                    <h3 className="text-xl font-medium text-gray-800 tracking-wide mb-2">Signal</h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">blog, updates, publications</p>
-                                </div>
-
-                                <div className="pb-6">
-                                    <h3 className="text-xl font-medium text-gray-800 tracking-wide mb-2">Contact</h3>
-                                    <p className="text-gray-600 text-sm tracking-wide">connect, collaborate, reach out</p>
-                                </div>
-                            </div>
+                {isLoading ? (
+                    <section className="space-y-4">
+                        <div className="h-56 animate-pulse rounded-3xl bg-muted/40" />
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                            <div className="h-40 animate-pulse rounded-2xl bg-muted/40 lg:col-span-2" />
+                            <div className="h-40 animate-pulse rounded-2xl bg-muted/40" />
                         </div>
-                    </div>
-                </div>
-            )}
+                    </section>
+                ) : (
+                    <>
+                        <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                            <Card className="relative overflow-hidden rounded-3xl border border-border bg-card lg:col-span-5">
+                                <AppImage
+                                    src={detail.cover_image_url ?? detail.logo_url ?? FALLBACK_RESTAURANT_IMAGE}
+                                    alt={detail.name}
+                                    className="h-[240px] w-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                                    <Badge
+                                        className={`mb-2 inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide shadow-sm backdrop-blur-sm ${getStatusBadgeClass(detail.is_published)}`}
+                                    >
+                                        {detail.is_published ? "Đang hoạt động" : "Tạm ẩn"}
+                                    </Badge>
+                                    <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{detail.name}</h1>
+                                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                                        <Badge variant="outline" className="inline-flex items-center gap-1 rounded-full border-white/35 bg-black/25 px-2.5 py-1 font-medium text-white/95 backdrop-blur-sm">
+                                            {detail.cuisine_type ?? "Đa dạng món"}
+                                        </Badge>
+                                        <Badge variant="outline" className="inline-flex items-center gap-1 rounded-full border-white/35 bg-black/25 px-2.5 py-1 font-medium text-white/95 backdrop-blur-sm">
+                                            Mức giá: {formatPriceRange(detail.price_range)}
+                                        </Badge>
+                                        {detail.accepts_online_orders && (
+                                            <Badge className="inline-flex items-center gap-1 rounded-full border border-emerald-300/70 bg-emerald-500/90 px-2.5 py-1 font-semibold text-white shadow-sm hover:bg-emerald-500">
+                                                Online
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </div>
+                            </Card>
 
-            {/* Main Content Container */}
-            <div className="relative w-full h-screen flex items-center justify-center">
-                {/* Large Background Circles */}
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gray-200/50 -translate-x-1/2"></div>
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-80 h-80 rounded-full border border-dashed border-gray-400 -translate-x-1/4"></div>
+                            <Card className="rounded-2xl border border-border bg-card lg:col-span-7">
+                                <CardHeader className="pb-1">
+                                    <CardTitle>Thông tin nhanh</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                                        {detail.description ?? "Nhà hàng đang hoàn thiện thông tin chi tiết."}
+                                    </p>
 
-                {/* Vertical DESIGN Text */}
-                <div className="absolute left-16 top-1/2 -translate-y-1/2 -rotate-90 origin-center">
-                    <h1 className="text-6xl font-bold text-gray-800 tracking-wider">DESIGN</h1>
-                </div>
+                                    <Separator />
 
-                {/* Central Geometric Object */}
-                <div className="relative z-10">
-                    <div className="w-48 h-64 bg-gray-900 transform rotate-12 relative">
-                        {/* Creating a geometric crystal-like shape */}
-                        <div className="absolute inset-0 bg-gray-800 transform -skew-x-12 skew-y-6"></div>
-                        <div className="absolute inset-0 bg-gray-700 transform skew-x-6 -skew-y-3 translate-x-4"></div>
-                        <div className="absolute inset-0 bg-gray-900 transform -skew-x-6 skew-y-12 translate-y-2"></div>
-                        <div className="absolute top-0 left-1/2 w-0 h-0 border-l-12 border-r-12 border-b-16 border-l-transparent border-r-transparent border-b-gray-800 -translate-x-1/2 -translate-y-4"></div>
-                    </div>
-                </div>
+                                    <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                        <div className="flex items-start gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-muted-foreground">
+                                            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                                            <span className="line-clamp-2">{fullAddress}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-muted-foreground">
+                                            <Phone className="h-4 w-4 shrink-0" />
+                                            <span className="truncate">{detail.phone ?? "Đang cập nhật"}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-muted-foreground">
+                                            <Building2 className="h-4 w-4 shrink-0" />
+                                            <span className="truncate">{detail.email ?? "Đang cập nhật"}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-muted-foreground">
+                                            <Globe className="h-4 w-4 shrink-0" />
+                                            <span className="truncate">{detail.website ?? "Đang cập nhật"}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </section>
 
-                {/* Dotted Pattern Elements */}
-                <div className="absolute left-1/3 top-1/3 grid grid-cols-8 gap-1">
-                    {Array.from({ length: 64 }).map((_, i) => (
-                        <div key={i} className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                    ))}
-                </div>
+                        <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                            <Card className="rounded-2xl border border-border bg-card lg:col-span-7">
+                                <CardHeader className="pb-1">
+                                    <CardTitle>Giờ mở cửa</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="mb-3 rounded-xl border border-border bg-background px-3 py-2 text-sm">
+                                        <div className="flex items-center justify-between">
+                                            <span className="inline-flex items-center gap-1 text-muted-foreground">
+                                                <Clock3 className="h-4 w-4" />
+                                                Hôm nay ({DAY_LABELS[todayKey]})
+                                            </span>
+                                            <span className="font-semibold text-foreground">{formatOperatingHour(todayHour)}</span>
+                                        </div>
+                                    </div>
 
-                {/* Decorative X Symbols */}
-                <div className="absolute top-16 left-1/2 -translate-x-1/2 text-gray-600 text-xl">✕✕</div>
-                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 text-gray-600 text-xl">✕✕</div>
+                                    <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                                        {(Object.keys(DAY_LABELS) as DayKey[]).map((dayKey) => (
+                                            <div
+                                                key={dayKey}
+                                                className="flex items-center justify-between rounded-lg border border-border/60 px-2.5 py-2 text-sm text-muted-foreground"
+                                            >
+                                                <span>{DAY_LABELS[dayKey]}</span>
+                                                <span>{formatOperatingHour(detail.operating_hours[dayKey])}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
 
-                {/* Meteorite Label */}
-                <div className="absolute right-16 top-1/2 -translate-y-1/2">
-                    <div className="border border-gray-600 px-4 py-8 rotate-90">
-                        <span className="text-gray-600 text-xs font-medium tracking-widest">PRODUCT</span>
-                    </div>
-                </div>
-
-                {/* Dotted Lines */}
-                <div className="absolute top-1/4 right-1/4 w-32 h-px border-t border-dashed border-gray-400 rotate-45"></div>
-                <div className="absolute bottom-1/3 left-1/3 w-24 h-px border-t border-dashed border-gray-400 -rotate-12"></div>
+                            <Card className="rounded-2xl border border-border bg-card lg:col-span-5">
+                                <CardHeader className="pb-1">
+                                    <CardTitle>Hình ảnh nổi bật</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {galleryImages.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">Nhà hàng chưa thêm hình ảnh.</p>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {galleryImages.slice(0, 4).map((image, index) => (
+                                                <AppImage
+                                                    key={`${image}-${index}`}
+                                                    src={image}
+                                                    alt={`${detail.name} ${index + 1}`}
+                                                    className="h-28 w-full rounded-xl border border-border object-cover"
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </section>
+                    </>
+                )}
             </div>
-
-            {/* Bottom Left Text */}
-            <div className="absolute bottom-16 left-8">
-                <div className="space-y-2">
-                    <h2 className="text-gray-800 text-lg font-medium tracking-wider">VISUAL SYSTEM</h2>
-                    <p className="text-gray-600 text-sm tracking-wide">CREATE VISION</p>
-                </div>
-            </div>
-
-            {/* Bottom Right Navigation */}
-            <div className="absolute bottom-16 right-8">
-                <div className="flex items-center gap-2">
-                    <span className="text-gray-600 text-sm font-medium tracking-wider">NEXT</span>
-                    <span className="text-gray-600 text-lg">→</span>
-                </div>
-            </div>
-
-            {/* Side Decorative Elements */}
-            <div className="absolute left-8 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-                <div className="w-px h-4 bg-gray-400"></div>
-                <div className="w-px h-4 bg-gray-400"></div>
-                <div className="w-px h-4 bg-gray-400"></div>
-            </div>
-        </div>
+        </PublicRestaurantsLayout>
     )
 }

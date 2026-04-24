@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react"
 import { Outlet, useLocation } from "react-router-dom"
 
 import { ACCOUNT_NAV_ITEMS, findActiveAccountNavItem } from "@/features/settings/account"
+import { useAuthStore } from "@/stores/auth-store"
+import { useUserStore } from "@/stores/user-store"
 
 import { SettingsHeader } from "./SettingsHeader"
 import { SettingsSidebar } from "./SettingsSidebar"
@@ -9,8 +11,16 @@ import { SettingsSidebar } from "./SettingsSidebar"
 export function SettingsLayout() {
     const [isDark, setIsDark] = useState(false)
     const { pathname } = useLocation()
+    const accessToken = useAuthStore((state) => state.accessToken)
+    const fetchProfile = useUserStore((state) => state.fetchProfile)
 
     const activeItem = useMemo(() => findActiveAccountNavItem(pathname), [pathname])
+    const isRestaurantsSection = pathname.startsWith("/settings/manage/restaurants")
+    const sectionGroup = isRestaurantsSection ? "Manage" : "Account"
+    const sectionTitle = isRestaurantsSection ? "Restaurants" : activeItem?.label ?? "Settings"
+    const sectionDescription = isRestaurantsSection
+        ? "Manage restaurant portfolios and relationship health."
+        : "Manage account profile, notifications, and security settings."
 
     useEffect(() => {
         const html = document.documentElement
@@ -20,6 +30,12 @@ export function SettingsLayout() {
 
         return () => html.classList.remove("dark")
     }, [isDark])
+
+    useEffect(() => {
+        if (!accessToken) return
+
+        void fetchProfile()
+    }, [accessToken, fetchProfile])
 
     return (
         <div className={`settings-page${isDark ? " dark" : ""} flex min-h-screen flex-col bg-background`}>
@@ -35,13 +51,13 @@ export function SettingsLayout() {
                         <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-4 sm:px-6">
                             <div className="flex flex-col gap-1">
                                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                                    Settings / Account
+                                    {`Settings / ${sectionGroup}`}
                                 </p>
                                 <h1 className="text-xl font-semibold text-foreground">
-                                    {activeItem?.label ?? "Settings"}
+                                    {sectionTitle}
                                 </h1>
                                 <p className="text-sm text-muted-foreground">
-                                    Manage account profile, notifications, and security settings.
+                                    {sectionDescription}
                                 </p>
                             </div>
                         </div>

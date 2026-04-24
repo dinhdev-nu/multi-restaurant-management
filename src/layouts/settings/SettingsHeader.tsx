@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"
 
 import { AUTH_ROUTE_PATHS } from "@/features/auth/constants"
 import { ACCOUNT_SECTION_PATHS } from "@/features/settings/account"
-import { logout } from "@/lib/api/auths"
+import { logout } from "@/services/auths"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/stores/auth-store"
 import { useUserStore } from "@/stores/user-store"

@@ -8,6 +8,7 @@ import {
     SecuritySection,
     SETTINGS_BASE_PATH,
 } from "@/features/settings/account"
+import { ListRestaurantsSection } from "@/features/settings/manages/ListRestaurantsSection"
 import { SettingsLayout } from "@/layouts/settings/SettingsLayout"
 import AccountPage from "@/pages/settings/AccountPage"
 
@@ -23,6 +24,8 @@ export function SettingRoutes() {
                 <Route path={ACCOUNT_SECTION_RELATIVE_PATHS.security} element={<SecuritySection />} />
                 <Route path="*" element={<Navigate to={ACCOUNT_SECTION_RELATIVE_PATHS.profile} replace />} />
             </Route>
+
+            <Route path="manage/restaurants" element={<ListRestaurantsSection />} />
 
             <Route path="*" element={<Navigate to={ACCOUNT_SECTION_ROUTE_PATHS.profile} replace />} />
         </Route>

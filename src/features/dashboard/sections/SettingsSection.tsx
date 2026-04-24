@@ -2,24 +2,24 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { RestaurantProfileRegistrationForm } from "@/features/dashboard/components/RestaurantProfileRegistrationForm";
+import {
+    CreateRestaurantProvider,
+    useCreateRestaurantActions,
+    useCreateRestaurantMeta,
+} from "@/features/new/FormProvider";
 import {
     User,
     Bell,
     Shield,
-    Palette,
     Link2,
-    Database,
     Mail,
     Smartphone,
-    Globe,
-    Key,
-    Check,
     ExternalLink,
     Zap,
+    Loader2,
     type LucideIcon,
 } from "lucide-react";
 
@@ -62,12 +62,6 @@ const notificationSettings: NotificationSetting[] = [
     { id: "acceptance_requests", label: "Yêu cầu cần chấp nhận", description: "Thông báo về các yêu cầu chấp nhận", email: false, push: true },
 ];
 
-const sessions = [
-    { device: "MacBook Pro", location: "TP. Hồ Chí Minh", current: true, time: "Bây giờ" },
-    { device: "iPhone 15", location: "TP. Hồ Chí Minh", current: false, time: "2 giờ trước" },
-    { device: "Chrome on Windows", location: "Hà Nội", current: false, time: "1 ngày trước" },
-];
-
 const tabs: Tab[] = [
     { id: "profile", label: "Hồ sơ", icon: User },
     { id: "notifications", label: "Thông báo", icon: Bell },
@@ -75,14 +69,56 @@ const tabs: Tab[] = [
     { id: "security", label: "Bảo mật", icon: Shield },
 ];
 
+function RestaurantProfileMainContent() {
+    const { submitForm } = useCreateRestaurantActions();
+    const { isSubmitting, isUploadingAssets } = useCreateRestaurantMeta();
+
+    return (
+        <form onSubmit={submitForm} className="space-y-6">
+            <RestaurantProfileRegistrationForm />
+
+            <div className="flex justify-end">
+                <Button
+                    type="submit"
+                    className="bg-accent hover:bg-accent/90 text-white"
+                    disabled={isSubmitting || isUploadingAssets}
+                >
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Đang lưu...
+                        </>
+                    ) : (
+                        "Lưu thông tin nhà hàng"
+                    )}
+                </Button>
+            </div>
+        </form>
+    );
+}
+
 export function SettingsSection() {
+    const DELETE_CONFIRM_TEXT = "XOA NHA HANG";
     const [activeTab, setActiveTab] = useState("profile");
+    const [deleteRestaurantConfirmText, setDeleteRestaurantConfirmText] = useState("");
+
+    const handleDeleteRestaurant = () => {
+        if (deleteRestaurantConfirmText.trim().toUpperCase() !== DELETE_CONFIRM_TEXT) {
+            return;
+        }
+
+        // TODO: Wire API call to permanently delete current restaurant.
+    };
+
+    const isDeleteRestaurantEnabled =
+        deleteRestaurantConfirmText.trim().toUpperCase() === DELETE_CONFIRM_TEXT;
+
     return (
         <div className="space-y-6">
             <div>
                 <h2 className="text-xl font-semibold text-foreground">Cài đặt</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                    Quản lý tùy chọn tài khoản và tích hợp
+                    Quản lý hồ sơ nhà hàng, thông báo, tích hợp và bảo mật.
                 </p>
             </div>
 
@@ -108,241 +144,130 @@ export function SettingsSection() {
 
             {/* Profile Tab */}
             {activeTab === "profile" && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <Card className="border-border bg-card">
-                    <CardHeader>
-                        <CardTitle className="text-base font-medium">Tùy chọn hiển thị</CardTitle>
-                        <CardDescription>Tùy chỉnh cách hiển thị dữ liệu</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Palette className="w-5 h-5 text-muted-foreground" />
-                                <div>
-                                    <p className="font-medium text-foreground">Chế độ tối</p>
-                                    <p className="text-sm text-muted-foreground">Sử dụng giao diện tối</p>
-                                </div>
-                            </div>
-                            <Switch defaultChecked />
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Globe className="w-5 h-5 text-muted-foreground" />
-                                <div>
-                                    <p className="font-medium text-foreground">Định dạng tiền tệ</p>
-                                    <p className="text-sm text-muted-foreground">Hiển thị tiền tệ theo khu vực</p>
-                                </div>
-                            </div>
-                            <Select defaultValue="vnd">
-                                <SelectTrigger className="w-[120px]">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="vnd">VND (₫)</SelectItem>
-                                    <SelectItem value="usd">USD ($)</SelectItem>
-                                    <SelectItem value="eur">EUR (€)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Database className="w-5 h-5 text-muted-foreground" />
-                                <div>
-                                    <p className="font-medium text-foreground">Giao diện gọn</p>
-                                    <p className="text-sm text-muted-foreground">Hiển thị nhiều dữ liệu hơn trong không gian nhỏ hơn</p>
-                                </div>
-                            </div>
-                            <Switch />
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <div className="flex justify-end">
-                    <Button className="bg-accent hover:bg-accent/90 text-white">
-                        <Check className="w-4 h-4 mr-2" />
-                        Lưu thay đổi
-                    </Button>
-                </div>
-            </div>
+                <CreateRestaurantProvider>
+                    <RestaurantProfileMainContent />
+                </CreateRestaurantProvider>
             )}
 
             {/* Notifications */}
             {activeTab === "notifications" && (
-            <Card className="border-border bg-card">
-                <CardHeader>
-                    <CardTitle className="text-base font-medium">Tùy chọn thông báo</CardTitle>
-                    <CardDescription>Chọn cách và khi nào bạn muốn nhận thông báo</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-1">
-                        <div className="grid grid-cols-[1fr,80px,80px] gap-4 pb-3 border-b border-border text-sm text-muted-foreground">
-                            <span>Loại thông báo</span>
-                            <span className="text-center flex items-center justify-center gap-1.5">
-                                <Mail className="w-4 h-4" />
-                                Email
-                            </span>
-                            <span className="text-center flex items-center justify-center gap-1.5">
-                                <Smartphone className="w-4 h-4" />
-                                Push
-                            </span>
-                        </div>
-                        {notificationSettings.map((notification, index) => (
-                            <div
-                                key={notification.id}
-                                className="grid grid-cols-[1fr,80px,80px] gap-4 py-4 border-b border-border last:border-0 animate-in fade-in slide-in-from-left-2"
-                                style={{ animationDelay: `${index * 50}ms` }}
-                            >
-                                <div>
-                                    <p className="font-medium text-foreground">{notification.label}</p>
-                                    <p className="text-sm text-muted-foreground">{notification.description}</p>
-                                </div>
-                                <div className="flex items-center justify-center">
-                                    <Switch checked={notification.email} />
-                                </div>
-                                <div className="flex items-center justify-center">
-                                    <Switch checked={notification.push} />
-                                </div>
+                <Card className="border-border bg-card">
+                    <CardHeader>
+                        <CardTitle className="text-base font-medium">Tùy chọn thông báo</CardTitle>
+                        <CardDescription>Chọn cách và khi nào bạn muốn nhận thông báo</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-1">
+                            <div className="grid grid-cols-[1fr,80px,80px] gap-4 pb-3 border-b border-border text-sm text-muted-foreground">
+                                <span>Loại thông báo</span>
+                                <span className="text-center flex items-center justify-center gap-1.5">
+                                    <Mail className="w-4 h-4" />
+                                    Email
+                                </span>
+                                <span className="text-center flex items-center justify-center gap-1.5">
+                                    <Smartphone className="w-4 h-4" />
+                                    Push
+                                </span>
                             </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+                            {notificationSettings.map((notification, index) => (
+                                <div
+                                    key={notification.id}
+                                    className="grid grid-cols-[1fr,80px,80px] gap-4 py-4 border-b border-border last:border-0 animate-in fade-in slide-in-from-left-2"
+                                    style={{ animationDelay: `${index * 50}ms` }}
+                                >
+                                    <div>
+                                        <p className="font-medium text-foreground">{notification.label}</p>
+                                        <p className="text-sm text-muted-foreground">{notification.description}</p>
+                                    </div>
+                                    <div className="flex items-center justify-center">
+                                        <Switch checked={notification.email} />
+                                    </div>
+                                    <div className="flex items-center justify-center">
+                                        <Switch checked={notification.push} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
             {/* Integrations */}
             {activeTab === "integrations" && (
-            <Card className="border-border bg-card">
-                <CardHeader>
-                    <CardTitle className="text-base font-medium">Dịch vụ đã kết nối</CardTitle>
-                    <CardDescription>Quản lý các tích hợp bên thứ ba</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {integrations.map((integration, index) => (
-                            <div
-                                key={integration.id}
-                                className="p-4 rounded-lg border bg-secondary/20 border-border hover:border-muted-foreground/30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
-                                style={{ animationDelay: `${index * 75}ms` }}
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                                            <Zap className="w-5 h-5 text-muted-foreground" />
+                <Card className="border-border bg-card">
+                    <CardHeader>
+                        <CardTitle className="text-base font-medium">Dịch vụ đã kết nối</CardTitle>
+                        <CardDescription>Quản lý các tích hợp bên thứ ba</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {integrations.map((integration, index) => (
+                                <div
+                                    key={integration.id}
+                                    className="p-4 rounded-lg border bg-secondary/20 border-border hover:border-muted-foreground/30 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
+                                    style={{ animationDelay: `${index * 75}ms` }}
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                                                <Zap className="w-5 h-5 text-muted-foreground" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-foreground">{integration.name}</p>
+                                                <p className="text-sm text-muted-foreground">{integration.description}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-medium text-foreground">{integration.name}</p>
-                                            <p className="text-sm text-muted-foreground">{integration.description}</p>
-                                        </div>
+                                        <Badge className="bg-muted text-muted-foreground border-border">
+                                            Chưa kết nối
+                                        </Badge>
                                     </div>
-                                    <Badge className="bg-muted text-muted-foreground border-border">
-                                        Chưa kết nối
-                                    </Badge>
+                                    <div className="mt-4 flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground">Chưa cấu hình</span>
+                                        <Button size="sm" className="h-8 bg-accent hover:bg-accent/90 text-white">
+                                            Kết nối
+                                            <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="mt-4 flex items-center justify-between">
-                                    <span className="text-xs text-muted-foreground">Chưa cấu hình</span>
-                                    <Button size="sm" className="h-8 bg-accent hover:bg-accent/90 text-white">
-                                        Kết nối
-                                        <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
             {/* Security */}
             {activeTab === "security" && (<>
-            <Card className="border-border bg-card">
-                <CardHeader>
-                    <CardTitle className="text-base font-medium">Mật khẩu & Xác thực</CardTitle>
-                    <CardDescription>Quản lý cài đặt bảo mật tài khoản</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
-                            <Input id="currentPassword" type="password" className="bg-secondary border-border focus:border-accent max-w-md" />
+                <Card className="border-border bg-card">
+                    <CardHeader>
+                        <CardTitle className="text-base font-medium text-destructive">Xóa nhà hàng</CardTitle>
+                        <CardDescription>Hành động này sẽ xóa vĩnh viễn dữ liệu nhà hàng và không thể hoàn tác</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                            <p className="text-sm text-muted-foreground">
+                                Khi xóa nhà hàng, toàn bộ thông tin hồ sơ, menu, đơn hàng và dữ liệu liên quan sẽ bị gỡ bỏ khỏi hệ thống.
+                            </p>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="newPassword">Mật khẩu mới</Label>
-                            <Input id="newPassword" type="password" className="bg-secondary border-border focus:border-accent max-w-md" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
-                            <Input id="confirmPassword" type="password" className="bg-secondary border-border focus:border-accent max-w-md" />
-                        </div>
-                        <Button variant="outline">Cập nhật mật khẩu</Button>
-                    </div>
-                </CardContent>
-            </Card>
 
-            <Card className="border-border bg-card">
-                <CardHeader>
-                    <CardTitle className="text-base font-medium">Xác thực hai yếu tố</CardTitle>
-                    <CardDescription>Thêm lớp bảo mật bổ sung cho tài khoản</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 border border-border">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                                <Key className="w-5 h-5 text-accent" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-foreground">Ứng dụng xác thực</p>
-                                <p className="text-sm text-muted-foreground">Sử dụng ứng dụng xác thực cho mã 2FA</p>
-                            </div>
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium text-foreground">
+                                Nhập <span className="text-destructive">{DELETE_CONFIRM_TEXT}</span> để xác nhận xóa.
+                            </p>
+                            <Input
+                                value={deleteRestaurantConfirmText}
+                                onChange={(event) => setDeleteRestaurantConfirmText(event.target.value)}
+                                placeholder={DELETE_CONFIRM_TEXT}
+                                className="max-w-md bg-background border-border focus-visible:ring-destructive/20"
+                            />
                         </div>
-                        <div className="flex items-center gap-3">
-                            <Badge className="bg-accent/20 text-accent border-accent/30">Đã bật</Badge>
-                            <Button variant="outline" size="sm">Quản lý</Button>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
 
-            <Card className="border-border bg-card">
-                <CardHeader>
-                    <CardTitle className="text-base font-medium">Phiên hoạt động</CardTitle>
-                    <CardDescription>Quản lý thiết bị đang đăng nhập</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-3">
-                        {sessions.map((session, index) => (
-                            <div
-                                key={index}
-                                className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border animate-in fade-in slide-in-from-left-2"
-                                style={{ animationDelay: `${index * 75}ms` }}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                                        <Globe className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-foreground">
-                                            {session.device}
-                                            {session.current && (
-                                                <Badge className="ml-2 bg-accent/20 text-accent border-accent/30 text-xs">
-                                                    Hiện tại
-                                                </Badge>
-                                            )}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {session.location} • {session.time}
-                                        </p>
-                                    </div>
-                                </div>
-                                {!session.current && (
-                                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                                        Thu hồi
-                                    </Button>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+                        <div className="flex justify-end">
+                            <Button variant="destructive" onClick={handleDeleteRestaurant} disabled={!isDeleteRestaurantEnabled}>
+                                Xóa nhà hàng
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             </>)}
         </div>
     );

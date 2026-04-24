@@ -8,16 +8,14 @@ import Select from '../../../components/Select';
 export type StaffFormMode = 'add' | 'edit';
 
 export interface StaffFormData {
+  userId: string;
+  employeeCode: string;
   name: string;
   phone: string;
   email: string;
   role: string;
-  shift: string;
-  workingHours: string;
-  salary: string;
+  status: string;
   startDate: string;
-  address: string;
-  notes: string;
   avatar: string;
 }
 
@@ -35,28 +33,18 @@ interface StaffFormModalProps {
 // ── Static options ────────────────────────────────────────────────────────────
 
 const ROLE_OPTIONS = [
-  { value: 'owner', label: 'Chủ cửa hàng' },
   { value: 'manager', label: 'Quản lý' },
   { value: 'cashier', label: 'Thu ngân' },
   { value: 'kitchen', label: 'Nhân viên bếp' },
   { value: 'waiter', label: 'Phục vụ' },
-  { value: 'cleaner', label: 'Vệ sinh' },
+  { value: 'delivery', label: 'Giao hàng' },
 ];
 
-const SHIFT_OPTIONS = [
-  { value: 'morning', label: 'Ca sáng (6:00 - 14:00)' },
-  { value: 'afternoon', label: 'Ca chiều (14:00 - 22:00)' },
-  { value: 'night', label: 'Ca đêm (22:00 - 6:00)' },
-  { value: 'full-time', label: 'Toàn thời gian' },
-  { value: 'part-time', label: 'Bán thời gian' },
-];
-
-const WORKING_HOURS_OPTIONS = [
-  { value: '4h', label: '4 giờ/ngày' },
-  { value: '6h', label: '6 giờ/ngày' },
-  { value: '8h', label: '8 giờ/ngày' },
-  { value: '10h', label: '10 giờ/ngày' },
-  { value: '12h', label: '12 giờ/ngày' },
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'Đang làm việc' },
+  { value: 'inactive', label: 'Không hoạt động' },
+  { value: 'on_leave', label: 'Đang nghỉ' },
+  { value: 'terminated', label: 'Đã nghỉ việc' },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -80,17 +68,6 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
   const icon = isEditMode ? 'Edit' : 'UserPlus';
   const submitText = isEditMode ? 'Lưu thay đổi' : 'Thêm nhân viên';
   const submitIcon = isEditMode ? 'Save' : 'UserPlus';
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      onFieldChange('avatar', result);
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handleRemoveImage = () => {
     onFieldChange('avatar', '');
@@ -122,7 +99,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
           <div className="space-y-4">
             <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
               <Icon name="Image" size={18} />
-              <span>Ảnh đại diện</span>
+              <span>Avatar URL</span>
             </h3>
 
             <div className="flex items-center gap-6">
@@ -150,22 +127,14 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
 
               {/* Upload Button */}
               <div className="flex-1">
-                <label
-                  htmlFor="avatar-upload"
-                  className="inline-flex items-center px-4 py-2 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                >
-                  <Icon name="Upload" size={18} className="mr-2" />
-                  <span className="text-sm font-medium">Chọn ảnh</span>
-                </label>
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/gif"
-                  onChange={handleFileChange}
-                  className="hidden"
+                <Input
+                  label="avatar_url"
+                  type="url"
+                  placeholder="https://example.com/avatar.jpg"
+                  value={formData.avatar}
+                  onChange={(e) => onFieldChange('avatar', e.target.value)}
+                  error={errors.avatar}
                 />
-                <p className="text-xs text-muted-foreground mt-2">JPG, PNG, GIF tối đa 5MB</p>
-                {errors.avatar && <p className="text-xs text-error mt-1">{errors.avatar}</p>}
               </div>
             </div>
           </div>
@@ -177,6 +146,24 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
               <span>Thông tin cơ bản</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="User ID liên kết"
+                type="text"
+                placeholder="Nhập user_id"
+                value={formData.userId}
+                onChange={(e) => onFieldChange('userId', e.target.value)}
+                error={errors.userId}
+                required
+              />
+              <Input
+                label="Mã nhân viên"
+                type="text"
+                placeholder="VD: NV001"
+                value={formData.employeeCode}
+                onChange={(e) => onFieldChange('employeeCode', e.target.value)}
+                error={errors.employeeCode}
+                required
+              />
               <Input
                 label="Họ và tên"
                 type="text"
@@ -193,7 +180,6 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 value={formData.phone}
                 onChange={(e) => onFieldChange('phone', e.target.value)}
                 error={errors.phone}
-                required
               />
               <Input
                 label="Email"
@@ -202,15 +188,6 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 value={formData.email}
                 onChange={(e) => onFieldChange('email', e.target.value)}
                 error={errors.email}
-                required
-                className="md:col-span-2"
-              />
-              <Input
-                label="Địa chỉ"
-                type="text"
-                placeholder="Nhập địa chỉ"
-                value={formData.address}
-                onChange={(e) => onFieldChange('address', e.target.value)}
                 className="md:col-span-2"
               />
             </div>
@@ -233,59 +210,22 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 required
               />
               <Select
-                label="Ca làm việc"
-                placeholder="Chọn ca làm việc"
-                options={SHIFT_OPTIONS}
-                value={formData.shift}
-                onChange={(event) => onFieldChange('shift', event.target.value)}
-                error={errors.shift}
-                required
-              />
-              <Select
-                label="Số giờ làm việc"
-                placeholder="Chọn số giờ"
-                options={WORKING_HOURS_OPTIONS}
-                value={formData.workingHours}
-                onChange={(event) => onFieldChange('workingHours', event.target.value)}
-                error={errors.workingHours}
-                required
+                label="Trạng thái"
+                placeholder="Chọn trạng thái"
+                options={STATUS_OPTIONS}
+                value={formData.status}
+                onChange={(event) => onFieldChange('status', event.target.value)}
+                error={errors.status}
               />
               <Input
-                label="Mức lương"
-                type="text"
-                placeholder="VD: 8.000.000"
-                value={formData.salary}
-                onChange={(e) => onFieldChange('salary', e.target.value)}
-                error={errors.salary}
+                label="Ngày bắt đầu"
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => onFieldChange('startDate', e.target.value)}
+                error={errors.startDate}
                 required={!isEditMode}
               />
-              {!isEditMode && (
-                <Input
-                  label="Ngày bắt đầu"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => onFieldChange('startDate', e.target.value)}
-                  error={errors.startDate}
-                  required
-                  className="md:col-span-2"
-                />
-              )}
             </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
-              <Icon name="FileText" size={18} />
-              <span>Ghi chú</span>
-            </h3>
-            <textarea
-              placeholder="Ghi chú thêm về nhân viên..."
-              value={formData.notes}
-              onChange={(e) => onFieldChange('notes', e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none text-sm"
-            />
           </div>
         </div>
 

@@ -5,15 +5,8 @@ import { cn } from '@/lib/utils';
 import Button from '../../../components/Button';
 import type { Staff } from './StaffCard';
 
-export interface StaffDynamicData {
-  ordersToday: number;
-  workedDisplay: string;
-}
-
 interface StaffTableProps {
   staff: Staff[];
-  /** Map of staff._id → dynamic runtime data */
-  dynamicData: Map<string, StaffDynamicData>;
   selectedStaff: string[];
   isAllSelected: boolean;
   onSelectStaff: (id: string) => void;
@@ -28,27 +21,30 @@ interface StaffTableProps {
 
 const STATUS_COLOR: Record<Staff['status'], string> = {
   'active': 'text-success',
-  'on-break': 'text-warning',
-  'inactive': 'text-error',
+  'inactive': 'text-muted-foreground',
+  'on_leave': 'text-warning',
+  'terminated': 'text-error',
 };
 
 const STATUS_BG: Record<Staff['status'], string> = {
   'active': 'bg-success/10',
-  'on-break': 'bg-warning/10',
-  'inactive': 'bg-error/10',
+  'inactive': 'bg-muted',
+  'on_leave': 'bg-warning/10',
+  'terminated': 'bg-error/10',
 };
 
 const STATUS_DOT: Record<Staff['status'], string> = {
   'active': 'bg-success',
-  'on-break': 'bg-warning',
-  'inactive': 'bg-error',
+  'inactive': 'bg-muted-foreground',
+  'on_leave': 'bg-warning',
+  'terminated': 'bg-error',
 };
 
 const ROLE_COLOR: Record<string, string> = {
-  owner: 'bg-primary text-primary-foreground',
   manager: 'bg-accent text-accent-foreground',
   cashier: 'bg-secondary text-secondary-foreground',
   kitchen: 'bg-success text-success-foreground',
+  delivery: 'bg-primary text-primary-foreground',
 };
 
 const getRoleColor = (role: string): string =>
@@ -58,7 +54,6 @@ const getRoleColor = (role: string): string =>
 
 const StaffTable = memo<StaffTableProps>(({
   staff,
-  dynamicData,
   selectedStaff,
   isAllSelected,
   onSelectStaff,
@@ -91,15 +86,12 @@ const StaffTable = memo<StaffTableProps>(({
             <th className="text-left p-4 font-medium text-muted-foreground">Vai trò</th>
             <th className="text-left p-4 font-medium text-muted-foreground">Trạng thái</th>
             <th className="text-left p-4 font-medium text-muted-foreground">Liên hệ</th>
-            <th className="text-left p-4 font-medium text-muted-foreground">Ca làm</th>
-            <th className="text-left p-4 font-medium text-muted-foreground">Hiệu suất</th>
+            <th className="text-left p-4 font-medium text-muted-foreground">Ngày vào làm</th>
             <th className="text-left p-4 font-medium text-muted-foreground">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           {staff.map((member, index) => {
-            const dd = dynamicData.get(member._id) ?? { ordersToday: 0, workedDisplay: '0h 0p' };
-
             return (
               <tr
                 key={member._id}
@@ -159,15 +151,9 @@ const StaffTable = memo<StaffTableProps>(({
 
                 <td className="p-4">
                   <div className="text-sm">
-                    <p className="text-card-foreground font-medium">{member.shift}</p>
-                    <p className="text-muted-foreground">{member.workingHours}</p>
-                  </div>
-                </td>
-
-                <td className="p-4">
-                  <div className="text-sm">
-                    <p className="text-card-foreground font-medium">{dd.ordersToday} đơn</p>
-                    <p className="text-muted-foreground">{dd.workedDisplay} làm việc</p>
+                    <p className="text-card-foreground font-medium">
+                      {member.joinDate ? new Date(member.joinDate).toLocaleDateString('vi-VN') : '---'}
+                    </p>
                   </div>
                 </td>
 

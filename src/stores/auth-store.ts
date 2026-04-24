@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { setClientToken } from "@/lib/api/client"
+import { setClientToken } from "@/services/client"
 
 const ACCESS_TOKEN_KEY = "gigi_access_token"
 

@@ -1,5 +1,6 @@
 import { apiClient, unwrapResponseData } from "./client"
-import type { ApiSuccessResponse, UpdatePreferencesPayload, UpdateProfilePayload, UserProfile } from "./types"
+import type { ApiSuccessResponse } from "./types"
+import type { UpdatePreferencesPayload, UpdateProfilePayload, UserProfile } from "@/types/user-type"
 
 export interface UiPreferences {
   language: "en" | "vi"
@@ -28,7 +29,6 @@ export function mapPreferencesToUi(profile: UserProfile): UiPreferences {
 export async function getMe(): Promise<UserProfile> {
   // NOTE: /users/me trả thẳng object user, không bọc trong { data: ... }
   const response = await apiClient.get<ApiSuccessResponse<UserProfile>>("/users/me")
-  console.log("getMe response", response.data)
   return unwrapResponseData(response)
 }
 

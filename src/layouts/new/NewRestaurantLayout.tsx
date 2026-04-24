@@ -16,8 +16,8 @@ function LayoutFooter({ onOpenPreview }: { onOpenPreview: () => void }) {
     const isComplete = filledCount > 0;
 
     return (
-        <div className="border-t border-border bg-background/80 backdrop-blur-md px-4 sm:px-8 py-4 sticky bottom-0 z-40">
-            <div className="flex items-center justify-between mx-auto w-full">
+        <div className="shrink-0 border-t border-border bg-background/80 px-4 py-3 sm:px-8">
+            <div className="mx-auto flex w-full items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" type="button" className="gap-2 text-muted-foreground hover:text-foreground">
                         <ChevronLeft className="size-4" />
@@ -56,10 +56,10 @@ export function NewRestaurantLayout() {
     }, [isDark]);
 
     return (
-        <div className="profile-page h-screen w-full flex flex-col font-sans overflow-hidden fixed inset-0 bg-background">
+        <div className="flex min-h-dvh w-full flex-col bg-background font-sans">
             <SettingsHeader isDark={isDark} onToggle={() => setIsDark((value) => !value)} />
 
-            <main className="flex-1 overflow-y-auto w-full custom-scrollbar">
+            <main className="min-h-0 flex-1 w-full overflow-y-auto custom-scrollbar">
                 <div className="flex min-h-full">
                     <div className="hidden sm:block flex-1 border-r border-border" />
                     <div className="w-full max-w-3xl px-4 sm:px-8 py-6">

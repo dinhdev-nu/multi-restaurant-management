@@ -20,7 +20,7 @@ import {
     Trash2,
 } from "lucide-react"
 import { useUserStore } from "@/stores/user-store"
-import { toAppError } from "@/lib/api/error"
+import { toAppError } from "@/services/error"
 import {
     changePassword,
     enable2fa,
@@ -28,7 +28,7 @@ import {
     getSessions,
     revokeSession,
     type SessionInfo,
-} from "@/lib/api/auths"
+} from "@/services/auths"
 
 import { AUDIT_LOG } from "./constants"
 

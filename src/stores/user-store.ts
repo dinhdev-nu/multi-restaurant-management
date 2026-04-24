@@ -1,7 +1,8 @@
 import { create } from "zustand"
-import type { AppError, UpdatePreferencesPayload, UpdateProfilePayload, UserProfile } from "@/lib/api/types"
-import { toAppError } from "@/lib/api/error"
-import { getMe, mapPreferencesToUi, updateMe, updateMyPreferences, type UiPreferences } from "@/lib/api/users"
+import type { UpdatePreferencesPayload, UpdateProfilePayload, UserProfile } from "@/types/user-type"
+import type { AppError } from "@/services/types"
+import { toAppError } from "@/services/error"
+import { getMe, mapPreferencesToUi, updateMe, updateMyPreferences, type UiPreferences } from "@/services/users"
 
 const PROFILE_STORAGE_KEY = "gigi_profile"
 const PREFERENCES_STORAGE_KEY = "gigi_preferences"

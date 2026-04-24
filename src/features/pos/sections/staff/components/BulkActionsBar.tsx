@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import Icon from '@/components/AppIcon';
 import Button from '../../../components/Button';
 import Select from '../../../components/Select';
@@ -14,18 +14,18 @@ interface BulkActionsBarProps {
 }
 
 const ROLE_OPTIONS = [
-  { value: 'owner', label: 'Chủ cửa hàng' },
   { value: 'manager', label: 'Quản lý' },
   { value: 'cashier', label: 'Thu ngân' },
   { value: 'kitchen', label: 'Nhân viên bếp' },
   { value: 'waiter', label: 'Phục vụ' },
-  { value: 'cleaner', label: 'Vệ sinh' },
+  { value: 'delivery', label: 'Giao hàng' },
 ];
 
 const STATUS_OPTIONS = [
   { value: 'active', label: 'Kích hoạt' },
   { value: 'inactive', label: 'Vô hiệu hóa' },
-  { value: 'on-break', label: 'Tạm nghỉ' },
+  { value: 'on_leave', label: 'Tạm nghỉ' },
+  { value: 'terminated', label: 'Nghỉ việc' },
 ];
 
 const BulkActionsBar = memo<BulkActionsBarProps>(({

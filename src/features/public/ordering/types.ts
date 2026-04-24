@@ -1,4 +1,4 @@
-import type { UserProfile } from "@/lib/api/types"
+import type { UserProfile } from "@/services/types"
 
 export type NotificationType = "success" | "warning" | "error" | "info"
 

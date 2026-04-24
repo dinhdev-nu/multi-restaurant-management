@@ -1,4 +1,5 @@
 import { Bell, Building2, LogOut, Search, UserCircle } from "lucide-react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 import {
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import LocationSelector from "./LocationSelector"
+import PublicHeaderSearch from "./PublicHeaderSearch"
 import type { FeedLocationSelection, FeedUser } from "../types"
 
 interface FeedHeaderProps {
@@ -34,11 +36,12 @@ function getInitial(user: FeedUser | null): string {
 
 export default function FeedHeader({ user, onLocationChange, onLogout }: FeedHeaderProps) {
     const navigate = useNavigate()
+    const [isSearchOpen, setIsSearchOpen] = useState(false)
 
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="flex h-16 items-center justify-between">
+                <div className="flex h-16 items-center justify-between gap-3">
                     <button
                         type="button"
                         onClick={() => navigate("/")}
@@ -52,22 +55,13 @@ export default function FeedHeader({ user, onLocationChange, onLogout }: FeedHea
                         <h1 className="hidden text-xl font-bold text-foreground sm:block">Feed</h1>
                     </button>
 
-                    <div className="mx-8 hidden max-w-2xl flex-1 lg:flex">
-                        <div className="relative w-full">
-                            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                            <input
-                                name="feed-search"
-                                type="text"
-                                placeholder="Tìm kiếm nhà hàng, món ăn..."
-                                className="w-full rounded-full border border-border bg-secondary py-2.5 pl-12 pr-4 text-sm text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                            />
-                        </div>
-                    </div>
+                    <PublicHeaderSearch isOpen={isSearchOpen} onOpenChange={setIsSearchOpen} />
 
                     <div className="flex items-center space-x-2">
                         <button
                             type="button"
                             aria-label="Tìm kiếm"
+                            onClick={() => setIsSearchOpen((previous) => !previous)}
                             className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground lg:hidden"
                         >
                             <Search className="h-5 w-5" />

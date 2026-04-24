@@ -11,7 +11,7 @@ interface SidebarNavItem {
 }
 
 const MANAGEMENT_NAV_ITEMS: SidebarNavItem[] = [
-    { id: "restaurants", label: "Restaurants", icon: Store, href: "/restaurants" },
+    { id: "restaurants", label: "Restaurants", icon: Store, href: "/settings/manage/restaurants" },
     { id: "add-restaurant", label: "Add Restaurant", icon: CirclePlus, href: "/restaurants/new" },
 ]
 

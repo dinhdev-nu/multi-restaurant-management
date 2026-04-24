@@ -202,7 +202,14 @@ const Sidebar = memo<SidebarProps>(({
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav
+          className={[
+            'flex-1',
+            isCollapsed
+              ? 'p-2 flex flex-col items-center justify-center gap-3 overflow-hidden'
+              : 'p-4 space-y-2 overflow-y-auto',
+          ].join(' ')}
+        >
           {filteredItems.map((item) => (
             <NavButton
               key={item.section}

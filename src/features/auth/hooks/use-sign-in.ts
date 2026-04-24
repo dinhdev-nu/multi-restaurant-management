@@ -5,9 +5,9 @@ import {
   login,
   send2faOtp, verify2faOtp,
   forgotPassword, verifyResetPasswordOtp, resetPassword,
-} from "@/lib/api/auths"
+} from "@/services/auths"
 import { SETTINGS_DEFAULT_PATH } from "@/routes/setting-route-config"
-import { toAppError } from "@/lib/api/error"
+import { toAppError } from "@/services/error"
 import { useAuthStore } from "@/stores/auth-store"
 
 interface SignInForm {

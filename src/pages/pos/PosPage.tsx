@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import PosLayout from '@/layouts/pos/PosLayout';
 import MainPosSection from '@/features/pos/sections/main-pos/MainPosSection';
 import TableSection from '@/features/pos/sections/table/TableSection';
+import { POS_BASE_PATH, POS_DEFAULT_SLUG } from '@/routes/pos-route';
 
 import { usePOSStore, type POSSection } from '@/stores/pos-store';
 import {
@@ -28,26 +29,31 @@ const ROUTE_TO_SECTION: Record<string, POSSection> = {
   '/staff': 'staff',
 };
 
-const SECTION_TO_ROUTE: Record<POSSection, string> = {
-  'main-pos': '/pos',
-  table: '/pos/tables',
-  payment: '/pos/payments',
-  order: '/pos/orders',
-  menu: '/pos/menu',
-  staff: '/pos/staff',
+const SECTION_TO_ROUTE_SUFFIX: Record<POSSection, string> = {
+  'main-pos': '',
+  table: '/tables',
+  payment: '/payments',
+  order: '/orders',
+  menu: '/menu',
+  staff: '/staff',
 };
 
-const getPosSubPath = (pathname: string) => {
-  if (!pathname.startsWith('/pos')) {
+const getPosSubPath = (pathname: string, slug: string) => {
+  const posPrefix = `${POS_BASE_PATH}/${slug}`;
+
+  if (!pathname.startsWith(posPrefix)) {
     return pathname;
   }
 
-  return pathname.slice(4);
+  const subPath = pathname.slice(posPrefix.length);
+  return subPath || '/';
 };
 
 const PosPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
+  const currentSlug = slug ?? POS_DEFAULT_SLUG;
 
   const isOperational = usePOSStore(state => state.isOperational);
   const activeSection = usePOSStore(state => state.activeSection);
@@ -55,18 +61,23 @@ const PosPage: React.FC = () => {
   const setActiveSection = usePOSStore(state => state.setActiveSection);
 
   useEffect(() => {
-    const subPath = getPosSubPath(location.pathname);
+    if (!slug) {
+      navigate(`${POS_BASE_PATH}/${POS_DEFAULT_SLUG}`, { replace: true });
+      return;
+    }
+
+    const subPath = getPosSubPath(location.pathname, currentSlug);
     const nextSection = ROUTE_TO_SECTION[subPath];
 
     if (!nextSection) {
-      navigate('/pos', { replace: true });
+      navigate(`${POS_BASE_PATH}/${currentSlug}`, { replace: true });
       return;
     }
 
     if (activeSection !== nextSection) {
       setActiveSection(nextSection);
     }
-  }, [location.pathname, activeSection, setActiveSection, navigate]);
+  }, [slug, currentSlug, location.pathname, activeSection, setActiveSection, navigate]);
 
   const handleToggleOperational = React.useCallback(() => {
     toggleOperational();
@@ -76,11 +87,12 @@ const PosPage: React.FC = () => {
     const normalizedSection = section as POSSection;
     setActiveSection(normalizedSection);
 
-    const targetPath = SECTION_TO_ROUTE[normalizedSection] ?? '/pos';
+    const targetSuffix = SECTION_TO_ROUTE_SUFFIX[normalizedSection] ?? '';
+    const targetPath = `${POS_BASE_PATH}/${currentSlug}${targetSuffix}`;
     if (location.pathname !== targetPath) {
       navigate(targetPath);
     }
-  }, [setActiveSection, navigate, location.pathname]);
+  }, [setActiveSection, navigate, currentSlug, location.pathname]);
 
   const renderSectionContent = () => {
     switch (activeSection) {

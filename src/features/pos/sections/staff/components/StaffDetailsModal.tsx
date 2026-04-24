@@ -3,87 +3,97 @@ import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
 import { cn } from '@/lib/utils';
 import Button from '../../../components/Button';
+import type { StaffDetail } from '@/types/staff-type';
 import type { Staff } from './StaffCard';
-
-type ActivityType = 'order' | 'payment' | 'checkin' | 'update';
-
-interface RecentActivity {
-  time: string;
-  action: string;
-  type: ActivityType;
-}
 
 interface StaffDetailsModalProps {
   isOpen: boolean;
   staff: Staff | null;
-  workedDisplay?: string;
+  detail?: StaffDetail | null;
   onClose: () => void;
   onEdit: (staff: Staff) => void;
+  onLinkAccount?: (staff: Staff) => void;
+  onUpdatePermissions?: (staff: Staff) => void;
+  onUpdateAvatar?: (staff: Staff) => void;
 }
 
 // ── Style maps ────────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
   'active': 'text-success',
-  'on-break': 'text-warning',
-  'inactive': 'text-error',
+  'inactive': 'text-muted-foreground',
+  'on_leave': 'text-warning',
+  'terminated': 'text-error',
 };
 
 const STATUS_BG: Record<string, string> = {
   'active': 'bg-success/10',
-  'on-break': 'bg-warning/10',
-  'inactive': 'bg-error/10',
+  'inactive': 'bg-muted',
+  'on_leave': 'bg-warning/10',
+  'terminated': 'bg-error/10',
 };
 
 const STATUS_DOT: Record<string, string> = {
   'active': 'bg-success',
-  'on-break': 'bg-warning',
-  'inactive': 'bg-error',
+  'inactive': 'bg-muted-foreground',
+  'on_leave': 'bg-warning',
+  'terminated': 'bg-error',
 };
 
 const ROLE_COLOR: Record<string, string> = {
-  owner: 'bg-primary text-primary-foreground',
   manager: 'bg-accent text-accent-foreground',
   cashier: 'bg-secondary text-secondary-foreground',
   kitchen: 'bg-success text-success-foreground',
-};
-
-const ACTIVITY_ICON: Record<ActivityType, string> = {
-  order: 'Receipt',
-  payment: 'CreditCard',
-  checkin: 'LogIn',
-  update: 'Edit',
+  delivery: 'bg-primary text-primary-foreground',
 };
 
 const getRoleColor = (role: string): string =>
   ROLE_COLOR[role] ?? 'bg-muted text-muted-foreground';
-
-// ── Static sample data ────────────────────────────────────────────────────────
-
-const RECENT_ACTIVITIES: RecentActivity[] = [
-  { time: '14:30', action: 'Xử lý đơn hàng #1234', type: 'order' },
-  { time: '14:15', action: 'Thanh toán bàn số 5', type: 'payment' },
-  { time: '14:00', action: 'Bắt đầu ca làm việc', type: 'checkin' },
-  { time: '13:45', action: 'Cập nhật thực đơn', type: 'update' },
-];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
   isOpen,
   staff,
-  workedDisplay = '0h 0p',
+  detail,
   onClose,
   onEdit,
+  onLinkAccount,
+  onUpdatePermissions,
+  onUpdateAvatar,
 }) => {
   if (!isOpen || !staff) return null;
 
-  const performanceData = [
-    { label: 'Đơn hàng hôm nay', value: staff.ordersToday ?? '—', icon: 'Receipt' },
-    { label: 'Giờ làm việc', value: workedDisplay, icon: 'Clock' },
-    { label: 'Đánh giá trung bình', value: '4.8/5', icon: 'Star' },
-    { label: 'Khách hàng phục vụ', value: '156', icon: 'Users' },
+  const infoRows = [
+    { icon: 'Badge', label: 'Mã nhân viên', value: detail?.employee_code ?? staff.employeeId ?? '---' },
+    { icon: 'User', label: 'User ID', value: detail?.user_id ?? staff.userId ?? '---' },
+    { icon: 'Phone', label: 'Số điện thoại', value: detail?.phone ?? staff.phone ?? '---' },
+    { icon: 'Mail', label: 'Email', value: detail?.email ?? staff.email ?? '---' },
+    {
+      icon: 'Calendar',
+      label: 'Ngày vào làm',
+      value: detail?.hire_date
+        ? new Date(detail.hire_date).toLocaleDateString('vi-VN')
+        : (staff.joinDate ? new Date(staff.joinDate).toLocaleDateString('vi-VN') : '---'),
+    },
+    {
+      icon: 'Clock',
+      label: 'Cập nhật lần cuối',
+      value: detail?.updated_at ? new Date(detail.updated_at).toLocaleString('vi-VN') : '---',
+    },
   ];
+
+  const permissionRows = detail?.permissions
+    ? [
+      { key: 'can_discount', label: 'Giảm giá', value: detail.permissions.can_discount },
+      { key: 'can_cancel_order', label: 'Hủy đơn', value: detail.permissions.can_cancel_order },
+      { key: 'can_process_payment', label: 'Thanh toán', value: detail.permissions.can_process_payment },
+      { key: 'can_refund', label: 'Hoàn tiền', value: detail.permissions.can_refund },
+      { key: 'can_view_reports', label: 'Xem báo cáo', value: detail.permissions.can_view_reports },
+      { key: 'can_manage_tables', label: 'Quản lý bàn', value: detail.permissions.can_manage_tables },
+      { key: 'can_manage_menu', label: 'Quản lý menu', value: detail.permissions.can_manage_menu },
+    ]
+    : [];
 
   return (
     <div className="fixed inset-0 z-[1200] flex items-center justify-center overflow-hidden">
@@ -120,136 +130,72 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          <div className="p-6 space-y-6">
-            {/* Personal Info + Work Info */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Personal Info */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-card-foreground flex items-center space-x-2">
-                  <Icon name="User" size={18} />
-                  <span>Thông tin cá nhân</span>
-                </h3>
-                <div className="bg-muted/20 rounded-lg p-4 space-y-3">
-                  {[
-                    { icon: 'Badge', label: 'Mã nhân viên', value: staff.employeeId },
-                    { icon: 'Phone', label: 'Số điện thoại', value: staff.phone },
-                    { icon: 'Mail', label: 'Email', value: staff.email },
-                    { icon: 'Calendar', label: 'Ngày vào làm', value: '15/08/2024' },
-                  ].map((row) => (
-                    <div key={row.label} className="flex items-center gap-3">
-                      <Icon name={row.icon} size={16} className="text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{row.label}</p>
-                        <p className="font-medium text-card-foreground">{row.value}</p>
-                      </div>
-                    </div>
-                  ))}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-card-foreground flex items-center space-x-2">
+              <Icon name="User" size={18} />
+              <span>Thông tin nhân viên</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/20 rounded-lg p-4">
+              {infoRows.map((row) => (
+                <div key={row.label} className="flex items-center gap-3">
+                  <Icon name={row.icon} size={16} className="text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">{row.label}</p>
+                    <p className="font-medium text-card-foreground break-all">{row.value}</p>
+                  </div>
                 </div>
-              </div>
-
-              {/* Work Info */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-card-foreground flex items-center space-x-2">
-                  <Icon name="Briefcase" size={18} />
-                  <span>Thông tin công việc</span>
-                </h3>
-                <div className="bg-muted/20 rounded-lg p-4 space-y-3">
-                  {[
-                    { icon: 'Clock', label: 'Ca làm việc', value: staff.shift },
-                    { icon: 'Timer', label: 'Giờ làm việc', value: staff.workingHours },
-                    { icon: 'DollarSign', label: 'Mức lương', value: '8.500.000 VND' },
-                    { icon: 'LogIn', label: 'Lần đăng nhập cuối', value: 'Hôm nay, 14:30' },
-                  ].map((row) => (
-                    <div key={row.label} className="flex items-center gap-3">
-                      <Icon name={row.icon} size={16} className="text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">{row.label}</p>
-                        <p className="font-medium text-card-foreground">{row.value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
+          </div>
 
-            {/* Performance Stats */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-card-foreground flex items-center space-x-2">
-                <Icon name="TrendingUp" size={18} />
-                <span>Hiệu suất làm việc</span>
-              </h3>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {performanceData.map((item, index) => (
-                  <div key={index} className="bg-muted/20 rounded-lg p-4 text-center">
-                    <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10">
-                      <Icon name={item.icon} size={20} className="text-primary" />
-                    </div>
-                    <p className="text-lg font-semibold text-card-foreground">{item.value}</p>
-                    <p className="text-sm text-muted-foreground">{item.label}</p>
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-card-foreground flex items-center space-x-2">
+              <Icon name="Shield" size={18} />
+              <span>Quyền truy cập</span>
+            </h3>
+            {permissionRows.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-muted/20 rounded-lg p-4">
+                {permissionRows.map((item) => (
+                  <div key={item.key} className={cn('flex items-center gap-2 text-sm', item.value ? 'text-success' : 'text-error')}>
+                    <Icon name={item.value ? 'Check' : 'X'} size={14} />
+                    <span>{item.label}</span>
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Recent Activities */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-card-foreground flex items-center space-x-2">
-                <Icon name="Activity" size={18} />
-                <span>Hoạt động gần đây</span>
-              </h3>
-              <div className="bg-muted/20 rounded-lg p-4">
-                <div className="space-y-3">
-                  {RECENT_ACTIVITIES.map((activity, index) => (
-                    <div key={index} className="flex items-center gap-3 rounded-lg p-2 transition-colors duration-200 hover:bg-muted/30">
-                      <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-                        <Icon name={ACTIVITY_ICON[activity.type]} size={14} className="text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-card-foreground">{activity.action}</p>
-                        <p className="text-xs text-muted-foreground">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            ) : (
+              <div className="bg-muted/20 rounded-lg p-4 text-sm text-muted-foreground">
+                Permissions bị ẩn theo quyền truy cập hiện tại hoặc chưa có dữ liệu.
               </div>
-            </div>
-
-            {/* Permissions */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-card-foreground flex items-center space-x-2">
-                <Icon name="Shield" size={18} />
-                <span>Quyền truy cập</span>
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-muted/20 rounded-lg p-4">
-                  <h4 className="font-medium text-card-foreground mb-3">Được phép</h4>
-                  <div className="space-y-2">
-                    {['Xử lý đơn hàng', 'Thanh toán', 'Quản lý bàn', 'Xem báo cáo'].map((perm) => (
-                      <div key={perm} className="flex items-center gap-2 text-sm text-success">
-                        <Icon name="Check" size={14} />
-                        <span>{perm}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-muted/20 rounded-lg p-4">
-                  <h4 className="font-medium text-card-foreground mb-3">Bị hạn chế</h4>
-                  <div className="space-y-2">
-                    {['Quản lý nhân viên', 'Cài đặt hệ thống', 'Xóa dữ liệu', 'Báo cáo tài chính'].map((perm) => (
-                      <div key={perm} className="flex items-center gap-2 text-sm text-error">
-                        <Icon name="X" size={14} />
-                        <span>{perm}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
+          <Button
+            variant="outline"
+            iconName="Link"
+            iconPosition="left"
+            onClick={() => onLinkAccount?.(staff)}
+          >
+            Đổi tài khoản
+          </Button>
+          <Button
+            variant="outline"
+            iconName="Shield"
+            iconPosition="left"
+            onClick={() => onUpdatePermissions?.(staff)}
+          >
+            Cập nhật quyền
+          </Button>
+          <Button
+            variant="outline"
+            iconName="Image"
+            iconPosition="left"
+            onClick={() => onUpdateAvatar?.(staff)}
+          >
+            Cập nhật avatar
+          </Button>
           <Button
             variant="outline"
             iconName="Edit"

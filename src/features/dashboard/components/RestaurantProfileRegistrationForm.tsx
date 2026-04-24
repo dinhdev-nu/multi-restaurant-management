@@ -3,7 +3,7 @@ import {
     useCreateRestaurantActions,
     useCreateRestaurantMeta,
     useCreateRestaurantState,
-} from './FormProvider';
+} from '@/features/new/FormProvider';
 import {
     MOCK_PROVINCES,
     MOCK_DISTRICTS,
@@ -11,8 +11,8 @@ import {
     PRICE_RANGES,
     weekDays,
     DEFAULT_DAILY_OPERATING_HOUR,
-} from './constants';
-import type { DayKey, RestaurantDTO } from './constants';
+} from '@/features/new/constants';
+import type { DayKey, RestaurantDTO } from '@/features/new/constants';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
-import type { SlugCheckStatus } from './FormProvider';
+import type { SlugCheckStatus } from '@/features/new/FormProvider';
 import { Button } from '@/components/ui/button';
 
 const TIMEZONE_OPTIONS = [
@@ -104,9 +104,9 @@ interface OperatingHoursSectionProps {
 function FormIntroHeader() {
     return (
         <div>
-            <h2 className="text-xl font-semibold text-foreground">Đăng ký nhà hàng</h2>
+            <h2 className="text-xl font-semibold text-foreground">Hồ sơ nhà hàng</h2>
             <p className="text-sm text-muted-foreground mt-1">
-                Mang hương vị của bạn đến với thế giới. Điền thông tin bên dưới để thiết lập trang định danh chuyên nghiệp.
+                Cập nhật thông tin định danh, hình ảnh, liên hệ và giờ hoạt động của nhà hàng.
             </p>
         </div>
     );
@@ -638,7 +638,7 @@ function OperatingHoursSection({
     );
 }
 
-export function RegistrationForm() {
+export function RestaurantProfileRegistrationForm() {
     const { formData, errors } = useCreateRestaurantState();
     const {
         setField,
@@ -652,40 +652,42 @@ export function RegistrationForm() {
     const { logoPreview, coverPreview, galleryPreviews, slugCheckStatus, isLocating, locationError } = useCreateRestaurantMeta();
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 [&_[data-slot=input-group]]:bg-background [&_[data-slot=input-group]]:border-border [&_[data-slot=input]]:bg-background [&_[data-slot=input]]:border-border [&_[data-slot=select-trigger]]:bg-background [&_[data-slot=select-trigger]]:border-border">
             <FormIntroHeader />
 
-            <BrandIdentitySection
-                formData={formData}
-                errors={errors}
-                setField={setField}
-                changeTextField={changeTextField}
-                slugCheckStatus={slugCheckStatus}
-            />
+            <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
+                <BrandIdentitySection
+                    formData={formData}
+                    errors={errors}
+                    setField={setField}
+                    changeTextField={changeTextField}
+                    slugCheckStatus={slugCheckStatus}
+                />
 
-            <MediaSection
-                logoPreview={logoPreview}
-                coverPreview={coverPreview}
-                galleryPreviews={galleryPreviews}
-                uploadImage={uploadImage}
-            />
+                <LocationContactSection
+                    formData={formData}
+                    errors={errors}
+                    setField={setField}
+                    changeTextField={changeTextField}
+                    changeNumberField={changeNumberField}
+                    requestCurrentLocation={requestCurrentLocation}
+                    isLocating={isLocating}
+                    locationError={locationError}
+                />
 
-            <LocationContactSection
-                formData={formData}
-                errors={errors}
-                setField={setField}
-                changeTextField={changeTextField}
-                changeNumberField={changeNumberField}
-                requestCurrentLocation={requestCurrentLocation}
-                isLocating={isLocating}
-                locationError={locationError}
-            />
+                <MediaSection
+                    logoPreview={logoPreview}
+                    coverPreview={coverPreview}
+                    galleryPreviews={galleryPreviews}
+                    uploadImage={uploadImage}
+                />
 
-            <OperatingHoursSection
-                formData={formData}
-                changeOperatingClosed={changeOperatingClosed}
-                changeOperatingTime={changeOperatingTime}
-            />
+                <OperatingHoursSection
+                    formData={formData}
+                    changeOperatingClosed={changeOperatingClosed}
+                    changeOperatingTime={changeOperatingTime}
+                />
+            </div>
         </div>
     );
 }

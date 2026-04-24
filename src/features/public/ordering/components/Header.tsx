@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/AppIcon';
 import Button from '@/features/pos/components/Button';
 import OrdersDropdown from './OrdersDropdown';
-import { logout as logoutApi } from '@/lib/api/auths';
+import { logout as logoutApi } from '@/services/auths';
 import { useAuthStore } from '@/stores/auth-store';
 import { useUserStore } from '@/stores/user-store';
 
