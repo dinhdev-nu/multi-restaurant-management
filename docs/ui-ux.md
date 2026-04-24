@@ -791,7 +791,15 @@ app.com/
         ├── tables/:tableId                → View đơn của bàn
         └── kitchen                        → Màn hình bếp (KDS)
 ```
-
+Truy vết và triển khai POST   /restaurants/{id}/staff                          ← tạo hồ sơ nhân viên mới
+GET    /restaurants/{id}/staff                          ← danh sách nhân viên (phân trang)
+GET    /restaurants/{id}/staff/{staff_id}               ← chi tiết nhân viên
+PATCH  /restaurants/{id}/staff/{staff_id}               ← cập nhật thông tin cơ bản
+PATCH  /restaurants/{id}/staff/{staff_id}/status        ← cập nhật trạng thái
+PATCH  /restaurants/{id}/staff/{staff_id}/link-account  ← đổi tài khoản liên kết
+PATCH  /restaurants/{id}/staff/{staff_id}/permissions   ← cập nhật quyền hạn
+PUT    /restaurants/{id}/staff/{staff_id}/avatar        ← cập nhật avatar
+DELETE /restaurants/{id}/staff/{staff_id}               ← xoá nhân viên (soft delete) vài #file:staff. Nếu giao diện thiếu thì triển khai thêm giao diện mà vẫn giữ được sự đồng bộ và thống nhất giao diện pos hiên tại.
 ---
 
 # PHẦN III — THEME TỐI (ADMIN DASHBOARD)
