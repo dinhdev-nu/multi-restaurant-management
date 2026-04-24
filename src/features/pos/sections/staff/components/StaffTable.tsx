@@ -7,10 +7,6 @@ import type { Staff } from './StaffCard';
 
 interface StaffTableProps {
   staff: Staff[];
-  selectedStaff: string[];
-  isAllSelected: boolean;
-  onSelectStaff: (id: string) => void;
-  onSelectAll: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onEdit: (staff: Staff) => void;
   onToggleStatus: (staff: Staff) => void;
   onViewDetails: (staff: Staff) => void;
@@ -54,10 +50,6 @@ const getRoleColor = (role: string): string =>
 
 const StaffTable = memo<StaffTableProps>(({
   staff,
-  selectedStaff,
-  isAllSelected,
-  onSelectStaff,
-  onSelectAll,
   onEdit,
   onToggleStatus,
   onViewDetails,
@@ -74,14 +66,6 @@ const StaffTable = memo<StaffTableProps>(({
       <table className="w-full min-w-[800px]">
         <thead className="bg-muted/30 border-b border-border">
           <tr>
-            <th className="text-left p-4 font-medium text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={isAllSelected}
-                onChange={onSelectAll}
-                className="rounded border-border"
-              />
-            </th>
             <th className="text-left p-4 font-medium text-muted-foreground">Nhân viên</th>
             <th className="text-left p-4 font-medium text-muted-foreground">Vai trò</th>
             <th className="text-left p-4 font-medium text-muted-foreground">Trạng thái</th>
@@ -100,15 +84,6 @@ const StaffTable = memo<StaffTableProps>(({
                   index % 2 === 0 ? 'bg-background' : 'bg-muted/5'
                 )}
               >
-                <td className="p-4">
-                  <input
-                    type="checkbox"
-                    checked={selectedStaff.includes(member._id)}
-                    onChange={() => onSelectStaff(member._id)}
-                    className="rounded border-border"
-                  />
-                </td>
-
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="relative">

@@ -12,9 +12,6 @@ interface StaffDetailsModalProps {
   detail?: StaffDetail | null;
   onClose: () => void;
   onEdit: (staff: Staff) => void;
-  onLinkAccount?: (staff: Staff) => void;
-  onUpdatePermissions?: (staff: Staff) => void;
-  onUpdateAvatar?: (staff: Staff) => void;
 }
 
 // ── Style maps ────────────────────────────────────────────────────────────────
@@ -58,9 +55,6 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
   detail,
   onClose,
   onEdit,
-  onLinkAccount,
-  onUpdatePermissions,
-  onUpdateAvatar,
 }) => {
   if (!isOpen || !staff) return null;
 
@@ -172,30 +166,6 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
-          <Button
-            variant="outline"
-            iconName="Link"
-            iconPosition="left"
-            onClick={() => onLinkAccount?.(staff)}
-          >
-            Đổi tài khoản
-          </Button>
-          <Button
-            variant="outline"
-            iconName="Shield"
-            iconPosition="left"
-            onClick={() => onUpdatePermissions?.(staff)}
-          >
-            Cập nhật quyền
-          </Button>
-          <Button
-            variant="outline"
-            iconName="Image"
-            iconPosition="left"
-            onClick={() => onUpdateAvatar?.(staff)}
-          >
-            Cập nhật avatar
-          </Button>
           <Button
             variant="outline"
             iconName="Edit"

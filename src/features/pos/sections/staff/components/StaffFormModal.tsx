@@ -1,11 +1,23 @@
 import React from 'react';
 import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
+import { toast } from 'sonner';
+import { uploadSingleFile } from '@/services/uploads';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
 import Select from '../../../components/Select';
 
 export type StaffFormMode = 'add' | 'edit';
+
+export interface StaffPermissionsData {
+  can_discount: boolean;
+  can_cancel_order: boolean;
+  can_process_payment: boolean;
+  can_refund: boolean;
+  can_view_reports: boolean;
+  can_manage_tables: boolean;
+  can_manage_menu: boolean;
+}
 
 export interface StaffFormData {
   userId: string;
@@ -17,7 +29,18 @@ export interface StaffFormData {
   status: string;
   startDate: string;
   avatar: string;
+  permissions: StaffPermissionsData;
 }
+
+const PERMISSIONS_CONFIG = [
+  { key: 'can_discount', label: 'Giảm giá' },
+  { key: 'can_cancel_order', label: 'Hủy đơn' },
+  { key: 'can_process_payment', label: 'Thanh toán' },
+  { key: 'can_refund', label: 'Hoàn tiền' },
+  { key: 'can_view_reports', label: 'Xem báo cáo' },
+  { key: 'can_manage_tables', label: 'Quản lý bàn' },
+  { key: 'can_manage_menu', label: 'Quản lý menu' },
+] as const;
 
 interface StaffFormModalProps {
   isOpen: boolean;
@@ -26,7 +49,7 @@ interface StaffFormModalProps {
   errors?: Partial<Record<keyof StaffFormData | 'avatar', string>>;
   isLoading?: boolean;
   onClose: () => void;
-  onFieldChange: (field: keyof StaffFormData, value: string) => void;
+  onFieldChange: (field: keyof StaffFormData, value: string | boolean | StaffPermissionsData) => void;
   onSubmit: () => void;
 }
 
@@ -59,6 +82,8 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
   onFieldChange,
   onSubmit,
 }) => {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
   const imagePreview = formData.avatar ?? '';
 
   if (!isOpen) return null;
@@ -71,6 +96,33 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
 
   const handleRemoveImage = () => {
     onFieldChange('avatar', '');
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const uploadedInfo = await uploadSingleFile(file);
+      onFieldChange('avatar', uploadedInfo.url);
+      toast.success('Tải ảnh lên thành công');
+    } catch (error: Error | unknown) {
+      const err = error as Error;
+      toast.error(err.message || 'Lỗi khi tải ảnh lên');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const togglePermission = (key: keyof StaffPermissionsData) => {
+    onFieldChange('permissions', {
+      ...formData.permissions,
+      [key]: !formData.permissions[key],
+    });
   };
 
   return (
@@ -126,15 +178,28 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
               </div>
 
               {/* Upload Button */}
-              <div className="flex-1">
-                <Input
-                  label="avatar_url"
-                  type="url"
-                  placeholder="https://example.com/avatar.jpg"
-                  value={formData.avatar}
-                  onChange={(e) => onFieldChange('avatar', e.target.value)}
-                  error={errors.avatar}
+              <div className="flex-1 space-y-2">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
                 />
+                <Button 
+                  variant="outline" 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  iconName={isUploading ? 'Loader' : 'Upload'}
+                  iconPosition="left"
+                  className="w-full sm:w-auto"
+                >
+                  {isUploading ? 'Đang tải lên...' : 'Chọn ảnh từ máy...'}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Hỗ trợ định dạng JPG, PNG, WEBP.
+                </p>
+                {errors.avatar && <p className="text-xs text-error mt-1">{errors.avatar}</p>}
               </div>
             </div>
           </div>
@@ -227,6 +292,37 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
               />
             </div>
           </div>
+
+          {/* Permissions Information */}
+          <div className="space-y-4">
+            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
+              <Icon name="Shield" size={18} />
+              <span>Quyền truy cập</span>
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-muted/20 rounded-lg p-4">
+              {PERMISSIONS_CONFIG.map((perm) => {
+                const isChecked = !!formData.permissions?.[perm.key as keyof StaffPermissionsData];
+                return (
+                  <label key={perm.key} className="flex items-center gap-3 cursor-pointer group">
+                    <div className={`flex size-5 items-center justify-center rounded border transition-colors ${isChecked ? 'bg-primary border-primary' : 'border-input bg-background group-hover:border-primary/50'}`}>
+                      {isChecked && <Icon name="Check" size={14} className="text-primary-foreground" />}
+                    </div>
+                    <span className="text-sm font-medium text-card-foreground select-none">
+                      {perm.label}
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={isChecked}
+                      onChange={() => togglePermission(perm.key as keyof StaffPermissionsData)}
+                    />
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
 
         {/* Footer */}
