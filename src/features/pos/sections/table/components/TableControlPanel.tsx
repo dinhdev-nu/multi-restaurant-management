@@ -7,20 +7,11 @@ import type { Table } from './TableCard';
 
 type TableStatus = Table['status'];
 
-export interface NewTableForm {
+export interface UpdateTableForm {
   number: string;
+  name: string;
+  notes: string;
   capacity: number;
-  shape: 'rectangular' | 'circular';
-  x: number;
-  y: number;
-}
-
-export interface TableStats {
-  total: number;
-  available: number;
-  occupied: number;
-  reserved: number;
-  cleaning: number;
 }
 
 interface Server {
@@ -30,21 +21,18 @@ interface Server {
 
 interface TableControlPanelProps {
   selectedTable?: Table | null;
-  stats: TableStats;
   disabled?: boolean;
+  isSubmittingUpdate?: boolean;
+  isTogglingActive?: boolean;
+  isRegeneratingQr?: boolean;
   availableServers?: Server[];
   onTableStatusChange: (id: string, status: TableStatus) => void;
   onServerAssign: (id: string, serverLabel: string | null) => void;
-  onAddTable: (form: NewTableForm & { status: 'available' }) => void;
+  onUpdateTable: (id: string, form: UpdateTableForm) => void;
+  onToggleTableActive: (id: string) => void;
+  onRegenerateTableQr: (id: string) => void;
   onDeleteTable: (id: string) => void;
 }
-
-// ── Static options ────────────────────────────────────────────────────────────
-
-const SHAPE_OPTIONS = [
-  { value: 'rectangular', label: 'Hình chữ nhật' },
-  { value: 'circular', label: 'Hình tròn' },
-];
 
 const DEFAULT_SERVERS: Server[] = [
   { value: 'nguyen_van_a', label: 'Nguyễn Văn A' },
@@ -53,30 +41,30 @@ const DEFAULT_SERVERS: Server[] = [
   { value: 'pham_thi_d', label: 'Phạm Thị D' },
 ];
 
-const DEFAULT_FORM: NewTableForm = {
-  number: '', capacity: 4, shape: 'rectangular', x: 100, y: 100,
-};
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
 const TableControlPanel: React.FC<TableControlPanelProps> = ({
   selectedTable,
-  stats,
   disabled = false,
+  isSubmittingUpdate = false,
+  isTogglingActive = false,
+  isRegeneratingQr = false,
   availableServers = DEFAULT_SERVERS,
   onTableStatusChange,
   onServerAssign,
-  onAddTable,
+  onUpdateTable,
+  onToggleTableActive,
+  onRegenerateTableQr,
   onDeleteTable,
 }) => {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newForm, setNewForm] = useState<NewTableForm>(DEFAULT_FORM);
+  const [editForm, setEditForm] = useState<UpdateTableForm>({
+    number: selectedTable ? String(selectedTable.number) : '',
+    name: selectedTable?.name ?? '',
+    notes: selectedTable?.notes ?? '',
+    capacity: selectedTable?.capacity ?? 1,
+  });
 
-  const handleAddTable = () => {
-    if (!newForm.number) return;
-    onAddTable({ ...newForm, status: 'available' });
-    setNewForm(DEFAULT_FORM);
-    setShowAddForm(false);
+  const handleUpdateTable = () => {
+    if (!selectedTable || !editForm.number.trim()) return;
+    onUpdateTable(selectedTable._id, editForm);
   };
 
   const selectedServerId = availableServers.find(
@@ -85,7 +73,6 @@ const TableControlPanel: React.FC<TableControlPanelProps> = ({
 
   return (
     <div className="w-72 2xl:w-80 bg-surface border-l border-border h-full flex flex-col relative">
-      {/* Disabled Overlay */}
       {disabled && (
         <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-muted rounded-lg p-4 text-center">
@@ -95,179 +82,138 @@ const TableControlPanel: React.FC<TableControlPanelProps> = ({
         </div>
       )}
 
-      {!showAddForm && (
-        <>
-          {/* Header */}
-          <div className="p-4 border-b border-border flex-shrink-0">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Quản lý bàn</h2>
+      {selectedTable ? (
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="p-4 space-y-3 flex flex-col h-full">
+            <div className="flex items-center justify-between">
+               <h3 className="text-lg font-medium text-foreground">Bàn {selectedTable.number}</h3>
             </div>
-            <Button
-              variant="default"
-              size="sm"
-              fullWidth
-              iconName="Plus"
-              iconPosition="left"
-              onClick={() => setShowAddForm(true)}
-              className="mb-3"
-            >
-              Thêm bàn mới
-            </Button>
-          </div>
 
-          {/* Statistics */}
-          <div className="p-4 border-b border-border flex-shrink-0">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-foreground">Thống kê</h3>
-              <span className="text-xs text-muted-foreground">{stats.total} bàn</span>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              {[
-                { color: 'bg-success', textColor: 'text-success', value: stats.available },
-                { color: 'bg-warning', textColor: 'text-warning', value: stats.occupied },
-                { color: 'bg-error', textColor: 'text-error', value: stats.reserved },
-                { color: 'bg-primary', textColor: 'text-primary', value: stats.cleaning },
-              ].map((s, i) => (
-                <div key={i} className="flex items-center space-x-1">
-                  <div className={`w-2 h-2 rounded-full ${s.color}`} />
-                  <span className={`text-sm font-semibold ${s.textColor}`}>{s.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Selected Table Info */}
-          {selectedTable ? (
-            <div className="flex-1 overflow-y-auto min-h-0">
-              <div className="p-4 space-y-3">
-                <h3 className="text-sm font-medium text-foreground">Bàn {selectedTable.number}</h3>
-
-                {/* Status Control */}
-                <div>
-                  <label className="text-xs text-muted-foreground mb-2 block">Trạng thái</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {(
-                      [
-                        { status: 'available' as const, label: 'Trống', variant: 'success' },
-                        { status: 'occupied' as const, label: 'Có khách', variant: 'warning' },
-                        { status: 'reserved' as const, label: 'Đã đặt', variant: 'error' },
-                        { status: 'cleaning' as const, label: 'Dọn dẹp', variant: 'default' },
-                      ] as const
-                    ).map(({ status, label, variant }) => (
-                      <Button
-                        key={status}
-                        variant={selectedTable.status === status ? variant : 'outline'}
-                        size="sm"
-                        onClick={() => onTableStatusChange(selectedTable._id, status)}
-                      >
-                        {label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Server Assignment */}
-                <div>
-                  <label className="text-xs text-muted-foreground mb-2 block">Phân công nhân viên</label>
-                  <Select
-                    options={[{ value: '', label: 'Chưa phân công' }, ...availableServers]}
-                    value={selectedServerId}
-                    onChange={(event) => {
-                      const server = availableServers.find((s) => s.value === event.target.value);
-                      onServerAssign(selectedTable._id, server ? server.label : null);
-                    }}
-                  />
-                </div>
-
-                {/* Delete */}
-                <div className="space-y-2">
-                  <Button
-                    variant="error"
-                    size="sm"
-                    fullWidth
-                    iconName="Trash2"
-                    iconPosition="left"
-                    onClick={() => onDeleteTable(selectedTable._id)}
-                    disabled={selectedTable.status === 'occupied'}
-                  >
-                    Xóa bàn
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-y-auto min-h-0 flex items-center justify-center">
-              <div className="text-center text-muted-foreground p-4">
-                <Icon name="MousePointer" size={32} className="mx-auto mb-2" />
-                <p className="text-sm">Chọn một bàn để xem chi tiết</p>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Add New Table Panel */}
-      {showAddForm && (
-        <div className="flex-1 min-h-0 bg-surface flex flex-col">
-          <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
-            <h3 className="text-lg font-semibold text-foreground">Thêm bàn mới</h3>
-            <Button variant="ghost" size="icon" onClick={() => setShowAddForm(false)}>
-              <Icon name="X" size={20} />
-            </Button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+            {/* Status Control */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">Số bàn</label>
+              <label className="text-xs text-muted-foreground mb-2 block">Trạng thái hiện tại</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    { status: 'available' as const, label: 'Trống', variant: 'success' },
+                    { status: 'occupied' as const, label: 'Có khách', variant: 'warning' },
+                    { status: 'reserved' as const, label: 'Đã đặt', variant: 'error' },
+                    { status: 'cleaning' as const, label: 'Dọn dẹp', variant: 'default' },
+                  ] as const
+                ).map(({ status, label, variant }) => (
+                  <Button
+                    key={status}
+                    variant={selectedTable.status === status ? variant : 'outline'}
+                    size="sm"
+                    onClick={() => onTableStatusChange(selectedTable._id, status)}
+                    disabled={selectedTable.isActive === false}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2 mt-4 pt-4 border-t border-border">
+              <label className="text-xs text-muted-foreground block">Thông số chi tiết</label>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                    type="text"
+                    placeholder="Số bàn"
+                    value={editForm.number}
+                    onChange={(e) => setEditForm((p) => ({ ...p, number: e.target.value }))}
+                />
+                <Input
+                    type="number"
+                    min="1"
+                    max="99"
+                    placeholder="Sức chứa"
+                    value={editForm.capacity}
+                    onChange={(e) => setEditForm((p) => ({ ...p, capacity: parseInt(e.target.value, 10) || 1 }))}
+                />
+              </div>
               <Input
                 type="text"
-                placeholder="Ví dụ: 09"
-                value={newForm.number}
-                onChange={(e) => setNewForm((p) => ({ ...p, number: e.target.value }))}
-                required
+                placeholder="Tên bàn (không bắt buộc)"
+                value={editForm.name}
+                onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
               />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">Sức chứa (người)</label>
               <Input
-                type="number"
-                min="1"
-                max="20"
-                value={newForm.capacity}
-                onChange={(e) => setNewForm((p) => ({ ...p, capacity: parseInt(e.target.value) || 1 }))}
+                type="text"
+                placeholder="Ghi chú (không bắt buộc)"
+                value={editForm.notes}
+                onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))}
               />
+
+              <Button
+                variant="outline"
+                size="sm"
+                fullWidth
+                iconName="Save"
+                iconPosition="left"
+                onClick={handleUpdateTable}
+                disabled={isSubmittingUpdate || !editForm.number.trim()}
+              >
+                Cập nhật thông tin
+              </Button>
             </div>
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">Hình dạng</label>
+
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onToggleTableActive(selectedTable._id)}
+                disabled={isTogglingActive}
+                iconName={selectedTable.isActive === false ? 'Power' : 'PowerOff'}
+                iconPosition="left"
+              >
+                {selectedTable.isActive === false ? 'Kích hoạt' : 'Ngưng bàn'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onRegenerateTableQr(selectedTable._id)}
+                disabled={isRegeneratingQr}
+                iconName="QrCode"
+                iconPosition="left"
+              >
+                Tạo lại QR
+              </Button>
+            </div>
+
+            <div className="mt-4">
+              <label className="text-xs text-muted-foreground mb-2 block">Phân công cá nhân</label>
               <Select
-                options={SHAPE_OPTIONS}
-                value={newForm.shape}
-                onChange={(event) => setNewForm((p) => ({ ...p, shape: event.target.value as NewTableForm['shape'] }))}
+                options={[{ value: '', label: 'Chưa phân công' }, ...availableServers]}
+                value={selectedServerId}
+                onChange={(event) => {
+                  const server = availableServers.find((s) => s.value === event.target.value);
+                  onServerAssign(selectedTable._id, server ? server.label : null);
+                }}
               />
             </div>
-            <div className="bg-muted/50 rounded-lg p-3 border border-border">
-              <p className="text-xs text-muted-foreground">
-                <Icon name="Info" size={14} className="inline mr-1" />
-                Bàn mới sẽ được đặt ở vị trí mặc định. Bạn có thể kéo thả để điều chỉnh sau.
-              </p>
+
+            <div className="mt-auto pt-4">
+              <Button
+                variant="error"
+                size="sm"
+                fullWidth
+                iconName="Trash2"
+                iconPosition="left"
+                onClick={() => onDeleteTable(selectedTable._id)}
+                disabled={selectedTable.status === 'occupied' || isSubmittingUpdate || isTogglingActive}
+              >
+                Xóa bỏ bàn này
+              </Button>
             </div>
           </div>
-
-          <div className="p-4 border-t border-border flex space-x-2 flex-shrink-0">
-            <Button variant="outline" size="sm" fullWidth onClick={() => setShowAddForm(false)}>
-              Hủy
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              fullWidth
-              onClick={handleAddTable}
-              disabled={!newForm.number}
-              iconName="Plus"
-              iconPosition="left"
-            >
-              Thêm bàn
-            </Button>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto min-h-0 flex items-center justify-center">
+          <div className="text-center text-muted-foreground p-4">
+            <Icon name="MousePointer" size={32} className="mx-auto mb-2 text-muted-foreground/50" />
+            <p className="text-sm font-medium">Bảng điều khiển</p>
+            <p className="text-xs mt-1">Chọn một bàn để cấu hình chi tiết</p>
           </div>
         </div>
       )}

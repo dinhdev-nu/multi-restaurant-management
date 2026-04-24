@@ -30,6 +30,7 @@ const STATUS_LABEL: Record<TableStatus, string> = {
   occupied: 'Có khách',
   reserved: 'Đã đặt',
   cleaning: 'Dọn dẹp',
+  inactive: 'Ngưng hoạt động',
 };
 
 const STATUS_CLASS: Record<TableStatus, string> = {
@@ -37,6 +38,7 @@ const STATUS_CLASS: Record<TableStatus, string> = {
   occupied: 'bg-warning/10 text-warning',
   reserved: 'bg-error/10 text-error',
   cleaning: 'bg-primary/10 text-primary',
+  inactive: 'bg-muted text-muted-foreground',
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -98,6 +100,8 @@ const QuickActionBar: React.FC<QuickActionBarProps> = ({
         return [
           { label: 'Hoàn thành', icon: 'CheckCircle', variant: 'success', action: () => onQuickStatusChange(id, 'available') },
         ];
+      case 'inactive':
+        return [];
       default:
         return [];
     }

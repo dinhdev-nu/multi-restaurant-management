@@ -39,7 +39,7 @@ export interface UpdatePreferencesPayload {
   theme?: "light" | "dark" | "system"
   notifications?: {
     email?: boolean
-    phone?: boolean
+    sms?: boolean
     push?: boolean
   }
 }

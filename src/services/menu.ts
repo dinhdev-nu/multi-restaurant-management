@@ -6,6 +6,7 @@ import type {
     MenuItem,
     ListMenuCategoryQuery,
     ListMenuItemsQuery,
+    MenuItemListResponse,
     CreateMenuCategoryPayload,
     UpdateMenuCategoryPayload,
     ReorderCommandPayload,
@@ -134,8 +135,8 @@ export async function createMenuItem(restaurantId: string, payload: CreateMenuIt
 export async function listMenuItems(
     restaurantId: string,
     query?: ListMenuItemsQuery
-): Promise<{ data: MenuItem[]; pagination: any }> {
-    const response = await apiClient.get<ApiSuccessResponse<{ data: MenuItem[]; pagination: any }>>(
+): Promise<MenuItemListResponse> {
+    const response = await apiClient.get<ApiSuccessResponse<MenuItemListResponse>>(
         `/restaurants/${restaurantId}/menu/items`,
         { params: query }
     );

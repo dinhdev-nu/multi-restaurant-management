@@ -12,7 +12,7 @@ import {
     deleteMenuItem,
     toMenuEndpointError,
 } from '@/services/menu';
-import type { MenuItem, MenuCategoryWithCount } from '@/types/menu-type';
+import type { MenuItem, MenuCategoryWithCount, ListMenuItemsQuery } from '@/types/menu-type';
 import { MENU_SECTION_MOCK_CATEGORIES, MENU_SECTION_MOCK_ITEMS } from '../menu-mock';
 
 interface PaginationState {
@@ -105,7 +105,7 @@ export function useMenuManagement(restaurantId: string) {
             setCategories(cats.data);
 
             // Fetch items
-            const queryParams: any = { page, limit };
+            const queryParams: ListMenuItemsQuery = { page, limit };
             if (filterCategory !== 'all') {
                 queryParams.category_id = filterCategory;
             }
@@ -352,9 +352,7 @@ export function useMenuManagement(restaurantId: string) {
                 limit: 1,
             });
 
-            const total = typeof result.pagination?.total === 'number'
-                ? result.pagination.total
-                : result.data.length;
+            const total = result.pagination.total;
             return total > 0;
         } catch {
             return false;

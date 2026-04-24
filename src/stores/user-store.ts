@@ -101,12 +101,12 @@ export const useUserStore = create<UserState>((set, get) => ({
                     ? {
                         ...prev.profile.preferences.notifications,
                         email: preferences.notifications.email,
-                        sms: preferences.notifications.phone,
+                        sms: preferences.notifications.sms,
                         push: preferences.notifications.push,
                       }
                     : {
                         email: preferences.notifications.email,
-                        sms: preferences.notifications.phone,
+                        sms: preferences.notifications.sms,
                         push: preferences.notifications.push,
                       },
                 },

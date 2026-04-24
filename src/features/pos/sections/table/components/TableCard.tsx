@@ -1,14 +1,19 @@
 import React from 'react';
 import Icon from '@/components/AppIcon';
 
-type TableStatus = 'available' | 'occupied' | 'reserved' | 'cleaning';
-type TableShape  = 'rectangular' | 'circular';
+type TableStatus = 'available' | 'occupied' | 'reserved' | 'cleaning' | 'inactive';
+type TableShape = 'rectangular' | 'circular';
 
 export interface Table {
   _id: string;
   number: string | number;
   status: TableStatus;
   shape?: TableShape;
+  name?: string | null;
+  notes?: string | null;
+  isActive?: boolean;
+  hasQr?: boolean;
+  qrCode?: string | null;
   capacity: number;
   currentOccupancy: number;
   assignedServer?: string;
@@ -29,16 +34,18 @@ interface TableCardProps {
 
 const STATUS_COLOR: Record<TableStatus, string> = {
   available: 'bg-success text-success-foreground',
-  occupied:  'bg-warning text-warning-foreground',
-  reserved:  'bg-error text-error-foreground',
-  cleaning:  'bg-primary text-primary-foreground',
+  occupied: 'bg-warning text-warning-foreground',
+  reserved: 'bg-error text-error-foreground',
+  cleaning: 'bg-primary text-primary-foreground',
+  inactive: 'bg-muted text-muted-foreground',
 };
 
 const STATUS_ICON: Record<TableStatus, string> = {
   available: 'CheckCircle',
-  occupied:  'Users',
-  reserved:  'Clock',
-  cleaning:  'Sparkles',
+  occupied: 'Users',
+  reserved: 'Clock',
+  cleaning: 'Sparkles',
+  inactive: 'PowerOff',
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -46,18 +53,18 @@ const STATUS_ICON: Record<TableStatus, string> = {
 const TableCard: React.FC<TableCardProps> = ({
   table,
   onTableClick,
-  isDragging   = false,
+  isDragging = false,
   isEditingMode = false,
-  hasChanged   = false,
+  hasChanged = false,
 }) => {
   const isCircular = table.shape === 'circular';
 
   return (
     <div
       className={`
-        relative bg-surface border-2 p-4
+        relative bg-surface border-2 p-2 pt-3
         transition-all duration-200 hover:shadow-interactive
-        ${isCircular ? 'rounded-full w-24 h-24' : 'rounded-lg w-28 h-20'}
+        ${isCircular ? 'rounded-full w-32 h-32' : 'rounded-lg w-36 min-h-[8rem] h-auto'}
         ${isDragging ? 'opacity-50 scale-95' : 'hover:scale-105'}
         ${hasChanged && isEditingMode ? 'border-warning' : 'border-border'}
         flex flex-col items-center justify-center

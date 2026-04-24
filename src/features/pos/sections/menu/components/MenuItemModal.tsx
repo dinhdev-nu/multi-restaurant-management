@@ -94,18 +94,23 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
   const imagePreview = imagePreviewUrl;
 
   return (
-    <div className="fixed inset-0 z-1200 flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 z-[1200] flex items-center justify-center overflow-hidden">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-surface border border-border rounded-lg shadow-modal w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <div className="relative bg-card border border-border rounded-lg shadow-modal w-full max-w-2xl max-h-[90vh] overflow-hidden mx-4 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">
-            {isEditing ? 'Chỉnh sửa món ăn' : 'Thêm món mới'}
-          </h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <div className="flex items-center gap-3">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
+              <Icon name={isEditing ? "Edit" : "Plus"} size={20} color="white" />
+            </div>
+            <h2 className="text-xl font-semibold text-foreground">
+              {isEditing ? 'Chỉnh sửa món ăn' : 'Thêm món mới'}
+            </h2>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose} className="hover-scale">
             <Icon name="X" size={20} />
           </Button>
         </div>

@@ -43,7 +43,7 @@ export function NotificationSection() {
     const [notifPushFreq, setNotifPushFreq] = useState<NotifFreq>("instant")
 
     const resolvedNotifEmail = notifEmail ?? preferences?.notifications.email ?? false
-    const resolvedNotifPhone = notifPhone ?? preferences?.notifications.phone ?? false
+    const resolvedNotifPhone = notifPhone ?? preferences?.notifications.sms ?? false
     const resolvedNotifPush = notifPush ?? preferences?.notifications.push ?? false
 
     const handleSaveNotifications = async () => {
@@ -51,7 +51,7 @@ export function NotificationSection() {
             await savePreferences({
                 notifications: {
                     email: resolvedNotifEmail,
-                    phone: resolvedNotifPhone,
+                    sms: resolvedNotifPhone,
                     push: resolvedNotifPush,
                 },
             })

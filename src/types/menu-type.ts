@@ -51,6 +51,18 @@ export interface ListMenuItemsQuery {
     limit?: number;
 }
 
+export interface MenuItemPaginationMeta {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+}
+
+export interface MenuItemListResponse {
+    data: MenuItem[];
+    pagination: MenuItemPaginationMeta;
+}
+
 // ----------------------------------------------------------------------
 // Payloads DTOs
 // ----------------------------------------------------------------------

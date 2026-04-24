@@ -7,7 +7,7 @@ export interface UiPreferences {
   theme: "light" | "dark" | "system"
   notifications: {
     email: boolean
-    phone: boolean
+    sms: boolean
     push: boolean
   }
 }
@@ -20,7 +20,7 @@ export function mapPreferencesToUi(profile: UserProfile): UiPreferences {
     theme: prefs?.theme ?? "light",
     notifications: {
       email: Boolean(prefs?.notifications?.email),
-      phone: Boolean(prefs?.notifications?.sms),
+      sms: Boolean(prefs?.notifications?.sms),
       push: Boolean(prefs?.notifications?.push),
     },
   }
@@ -57,7 +57,7 @@ export async function updateMyPreferences(payload: UpdatePreferencesPayload): Pr
     theme: data.preferences.theme,
     notifications: {
       email: Boolean(data.preferences.notifications.email),
-      phone: Boolean(data.preferences.notifications.sms),
+      sms: Boolean(data.preferences.notifications.sms),
       push: Boolean(data.preferences.notifications.push),
     },
   }
