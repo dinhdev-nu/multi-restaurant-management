@@ -11,7 +11,7 @@ interface StaffDetailsModalProps {
   staff: Staff | null;
   detail?: StaffDetail | null;
   onClose: () => void;
-  onEdit: (staff: Staff) => void;
+  onEdit: (staff: Staff, detail?: StaffDetail | null) => void;
 }
 
 // ── Style maps ────────────────────────────────────────────────────────────────
@@ -170,7 +170,7 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
             variant="outline"
             iconName="Edit"
             iconPosition="left"
-            onClick={() => { onEdit(staff); onClose(); }}
+            onClick={() => { onEdit(staff, detail ?? null); onClose(); }}
           >
             Chỉnh sửa
           </Button>

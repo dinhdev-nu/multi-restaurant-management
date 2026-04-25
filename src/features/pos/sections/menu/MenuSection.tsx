@@ -98,15 +98,15 @@ const MenuSection: React.FC = () => {
     } = useCategoryForm(restaurantId, refetch);
 
     // Category filter formatting properties that child expects
-    const uiCategories = categories.map(cat => ({
+    const uiCategories = React.useMemo(() => categories.map((cat) => ({
         id: cat._id,
         name: cat.name,
-    }));
+    })), [categories]);
 
-    const uiItemCounts = categories.reduce((acc, cat) => {
+    const uiItemCounts = React.useMemo(() => categories.reduce((acc, cat) => {
         acc[cat._id] = cat.item_count || 0;
         return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, number>), [categories]);
 
     const requestToggleCategory = React.useCallback(async (categoryId: string, isActive: boolean) => {
         const category = categories.find((cat) => cat._id === categoryId);

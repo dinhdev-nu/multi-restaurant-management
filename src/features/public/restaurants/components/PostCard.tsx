@@ -1,4 +1,5 @@
 import { memo } from "react"
+import { useNavigate } from "react-router-dom"
 import {
     Bookmark,
     Check,
@@ -33,12 +34,23 @@ function getImageContainerClass(totalImages: number, index: number): string {
 }
 
 function PostCardComponent({ post, onLike, onBookmark }: PostCardProps) {
+    const navigate = useNavigate()
+
+    const handleOpenRestaurant = () => {
+        navigate(`/public/restaurants/${post.restaurant.slug}`)
+    }
+
     return (
         <article className="overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:bg-accent/15">
             <div className="p-5">
                 <div className="mb-4 flex items-start justify-between">
                     <div className="flex items-start space-x-3">
-                        <div className="relative shrink-0">
+                        <button
+                            type="button"
+                            onClick={handleOpenRestaurant}
+                            className="relative shrink-0"
+                            aria-label={`Mở chi tiết ${post.restaurant.name}`}
+                        >
                             <AppImage
                                 src={post.restaurant.avatar}
                                 alt={post.restaurant.name}
@@ -50,10 +62,17 @@ function PostCardComponent({ post, onLike, onBookmark }: PostCardProps) {
                                     <Check className="h-3 w-3 text-white" />
                                 </div>
                             )}
-                        </div>
+                        </button>
 
                         <div>
-                            <h3 className="font-semibold text-foreground">{post.restaurant.name}</h3>
+                            <button
+                                type="button"
+                                onClick={handleOpenRestaurant}
+                                className="text-left"
+                                aria-label={`Mở chi tiết ${post.restaurant.name}`}
+                            >
+                                <h3 className="font-semibold text-foreground">{post.restaurant.name}</h3>
+                            </button>
                             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                                 <span>{post.timestamp}</span>
                                 <span>•</span>
@@ -164,11 +183,14 @@ function PostCardComponent({ post, onLike, onBookmark }: PostCardProps) {
             {post.images && post.images.length > 0 && (
                 <div className={`grid ${post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1`}>
                     {post.images.slice(0, 4).map((image, index) => (
-                        <div key={`${post.id}-image-${index}`} className={getImageContainerClass(post.images?.length ?? 0, index)}>
+                        <div
+                            key={`${post.id}-image-${index}`}
+                            className={getImageContainerClass(post.images?.length ?? 0, index)}
+                        >
                             <AppImage
                                 src={image}
                                 alt={`Post image ${index + 1}`}
-                                className="h-full w-full cursor-pointer object-cover transition-transform duration-500 hover:scale-105"
+                                className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                                 loading="lazy"
                             />
                             {index === 3 && post.images.length > 4 && (

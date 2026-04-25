@@ -114,6 +114,22 @@
               stroke 300ms ease-in-out;
 }
 
+.analysis-reporting .dashboard-sidebar-shell {
+  transition: width 300ms ease-in-out;
+  will-change: width;
+}
+
+.analysis-reporting .dashboard-main-shell {
+  transition: margin-left 300ms ease-in-out;
+}
+
+.analysis-reporting .dashboard-sidebar-label,
+.analysis-reporting .dashboard-sidebar-title,
+.analysis-reporting .dashboard-sidebar-nav-item,
+.analysis-reporting .dashboard-sidebar-collapse-button {
+  transition: all 300ms ease-in-out;
+}
+
 /* Light theme variant */
 .analysis-reporting.light {
   /* Light theme colors for SalesOps dashboard */

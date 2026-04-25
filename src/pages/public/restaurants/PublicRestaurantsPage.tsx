@@ -89,6 +89,7 @@ function mapRestaurantToPost(
         id: restaurant._id,
         type,
         restaurant: {
+            slug: restaurant.slug,
             name: restaurant.name,
             avatar: image,
             verified: Boolean(restaurant.logo_url || restaurant.cover_image_url),
@@ -116,6 +117,7 @@ function mapRestaurantToNearby(
 ) {
     return {
         id: restaurant._id,
+        slug: restaurant.slug,
         name: restaurant.name,
         image: restaurant.logo_url ?? restaurant.cover_image_url ?? FALLBACK_RESTAURANT_IMAGE,
         rating: Number((4.4 + ((index + 1) % 5) * 0.1).toFixed(1)),
@@ -372,9 +374,14 @@ export default function PublicRestaurantsPage() {
                                     {!isRestaurantsLoading && nearbyRestaurants.map((restaurant) => (
                                         <div
                                             key={restaurant.id}
-                                            className="flex cursor-pointer items-center space-x-3 rounded-xl p-2 transition-colors hover:bg-secondary"
+                                            className="flex items-center space-x-3 rounded-xl p-2 transition-colors hover:bg-secondary"
                                         >
-                                            <div className="relative shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={() => navigate(`/public/restaurants/${restaurant.slug}`)}
+                                                className="relative shrink-0"
+                                                aria-label={`Mở chi tiết ${restaurant.name}`}
+                                            >
                                                 <AppImage
                                                     src={restaurant.image}
                                                     alt={restaurant.name}
@@ -386,9 +393,16 @@ export default function PublicRestaurantsPage() {
                                                         <BadgeCheck className="h-2.5 w-2.5 text-white" />
                                                     </div>
                                                 )}
-                                            </div>
+                                            </button>
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-medium text-foreground">{restaurant.name}</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => navigate(`/public/restaurants/${restaurant.slug}`)}
+                                                    className="block w-full text-left"
+                                                    aria-label={`Mở chi tiết ${restaurant.name}`}
+                                                >
+                                                    <p className="truncate text-sm font-medium text-foreground">{restaurant.name}</p>
+                                                </button>
                                                 <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                                                     <span className="flex items-center">
                                                         <Star className="mr-0.5 h-3 w-3 fill-yellow-500 text-yellow-500" />

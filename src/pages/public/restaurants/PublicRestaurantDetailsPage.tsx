@@ -18,7 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { PublicRestaurantsLayout } from "@/layouts/public/PublicRestaurantsLayout"
 import { logout as logoutApi } from "@/services/auths"
-import { toAppError } from "@/services/error"
 import { getPublicRestaurantBySlug } from "@/services/restaurants"
 import { useAuthStore } from "@/stores/auth-store"
 import { useUserStore } from "@/stores/user-store"
@@ -34,50 +33,6 @@ const DAY_LABELS: Record<DayKey, string> = {
     fri: "Thứ 6",
     sat: "Thứ 7",
     sun: "Chủ nhật",
-}
-
-const MOCK_PUBLIC_RESTAURANT_DETAIL: PublicRestaurantDetail = {
-    _id: "mock-public-restaurant-detail",
-    name: "Gigi Garden Bistro",
-    slug: "gigi-garden-bistro",
-    description:
-        "Không gian ấm cúng theo phong cách sân vườn, nổi bật với thực đơn fusion Việt - Âu và các set tối theo mùa.",
-    cuisine_type: "Fusion Việt - Âu",
-    price_range: 3,
-    logo_url: "/assets/home/image.png",
-    cover_image_url: "/assets/home/image.png",
-    gallery_urls: ["/assets/home/image.png"],
-    address: "129 Nguyễn Trãi",
-    city: "Hà Nội",
-    district: "Thanh Xuân",
-    ward: "Thượng Đình",
-    latitude: 21.002121,
-    longitude: 105.815062,
-    location: {
-        type: "Point",
-        coordinates: [105.815062, 21.002121],
-    },
-    phone: "0901 234 567",
-    email: "hello@gigigarden.vn",
-    website: "https://gigigarden.vn",
-    operating_hours: {
-        mon: { closed: false, open: "10:00", close: "22:00" },
-        tue: { closed: false, open: "10:00", close: "22:00" },
-        wed: { closed: false, open: "10:00", close: "22:00" },
-        thu: { closed: false, open: "10:00", close: "22:00" },
-        fri: { closed: false, open: "10:00", close: "23:00" },
-        sat: { closed: false, open: "09:00", close: "23:00" },
-        sun: { closed: false, open: "09:00", close: "22:00" },
-    },
-    timezone: "Asia/Ho_Chi_Minh",
-    currency: "VND",
-    tax_rate: 8,
-    service_charge_rate: 5,
-    is_published: true,
-    accepts_online_orders: true,
-    deleted_at: null,
-    created_at: "2026-03-11T03:15:24.000Z",
-    updated_at: "2026-04-18T09:42:05.000Z",
 }
 
 function formatPriceRange(priceRange: PublicRestaurantDetail["price_range"]) {
@@ -126,7 +81,6 @@ export default function PublicRestaurantDetailsPage() {
 
     const [restaurant, setRestaurant] = useState<PublicRestaurantDetail | null>(null)
     const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
     const [isLinkCopied, setIsLinkCopied] = useState(false)
 
     const handleLogout = useCallback(async () => {
@@ -147,10 +101,9 @@ export default function PublicRestaurantDetailsPage() {
         const loadRestaurant = async () => {
             try {
                 setIsLoading(true)
-                setError(null)
 
                 if (!slug) {
-                    setRestaurant(MOCK_PUBLIC_RESTAURANT_DETAIL)
+                    navigate("/public/restaurants", { replace: true })
                     return
                 }
 
@@ -161,12 +114,8 @@ export default function PublicRestaurantDetailsPage() {
             } catch (caughtError) {
                 if (!isActive) return
 
-                const appError = toAppError(caughtError, "Không thể tải chi tiết nhà hàng.")
-                setError(appError.message)
-                setRestaurant({
-                    ...MOCK_PUBLIC_RESTAURANT_DETAIL,
-                    slug: slug ?? MOCK_PUBLIC_RESTAURANT_DETAIL.slug,
-                })
+                console.error("Failed to load public restaurant detail:", caughtError)
+                navigate("/public/restaurants", { replace: true })
             } finally {
                 if (isActive) {
                     setIsLoading(false)
@@ -179,15 +128,17 @@ export default function PublicRestaurantDetailsPage() {
         return () => {
             isActive = false
         }
-    }, [slug])
+    }, [navigate, slug])
 
-    const detail = restaurant ?? MOCK_PUBLIC_RESTAURANT_DETAIL
+    const detail = restaurant
 
     const fullAddress = useMemo(() => {
+        if (!detail) return ""
         return [detail.address, detail.ward, detail.district, detail.city].filter(Boolean).join(", ")
-    }, [detail.address, detail.city, detail.district, detail.ward])
+    }, [detail?.address, detail?.city, detail?.district, detail?.ward])
 
     const galleryImages = useMemo(() => {
+        if (!detail) return []
         return Array.from(
             new Set(
                 [detail.cover_image_url, detail.logo_url, ...detail.gallery_urls].filter(
@@ -195,10 +146,10 @@ export default function PublicRestaurantDetailsPage() {
                 )
             )
         )
-    }, [detail.cover_image_url, detail.gallery_urls, detail.logo_url])
+    }, [detail?.cover_image_url, detail?.gallery_urls, detail?.logo_url])
 
     const todayKey = resolveTodayKey()
-    const todayHour = detail.operating_hours[todayKey]
+    const todayHour = detail?.operating_hours[todayKey]
 
     const handleCopyLink = useCallback(async () => {
         try {
@@ -211,9 +162,9 @@ export default function PublicRestaurantDetailsPage() {
     }, [])
 
     const handleOrderByPhone = useCallback(() => {
-        if (!detail.phone) return
+        if (!detail?.phone) return
         window.location.href = `tel:${detail.phone.replace(/\s+/g, "")}`
-    }, [detail.phone])
+    }, [detail?.phone])
 
     return (
         <PublicRestaurantsLayout
@@ -253,7 +204,7 @@ export default function PublicRestaurantDetailsPage() {
                                     variant="outline"
                                     size="lg"
                                     onClick={handleOrderByPhone}
-                                    disabled={!detail.phone}
+                                    disabled={!detail?.phone}
                                 >
                                     <Phone className="h-4 w-4" />
                                     Gọi đặt món
@@ -261,21 +212,15 @@ export default function PublicRestaurantDetailsPage() {
                                 <Button
                                     type="button"
                                     size="lg"
-                                    disabled={!detail.accepts_online_orders}
+                                    disabled={!detail?.accepts_online_orders}
                                 >
                                     <Store className="h-4 w-4" />
-                                    {detail.accepts_online_orders ? "Đặt món online" : "Chưa hỗ trợ online"}
+                                    {detail?.accepts_online_orders ? "Đặt món online" : "Chưa hỗ trợ online"}
                                 </Button>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
-
-                {error && (
-                    <section className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-                        {error} Hiện đang hiển thị dữ liệu mẫu để tiếp tục trải nghiệm giao diện.
-                    </section>
-                )}
 
                 {isLoading ? (
                     <section className="space-y-4">
@@ -285,7 +230,7 @@ export default function PublicRestaurantDetailsPage() {
                             <div className="h-40 animate-pulse rounded-2xl bg-muted/40" />
                         </div>
                     </section>
-                ) : (
+                ) : detail ? (
                     <>
                         <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
                             <Card className="relative overflow-hidden rounded-3xl border border-border bg-card lg:col-span-5">
@@ -363,7 +308,9 @@ export default function PublicRestaurantDetailsPage() {
                                                 <Clock3 className="h-4 w-4" />
                                                 Hôm nay ({DAY_LABELS[todayKey]})
                                             </span>
-                                            <span className="font-semibold text-foreground">{formatOperatingHour(todayHour)}</span>
+                                            <span className="font-semibold text-foreground">
+                                                {todayHour ? formatOperatingHour(todayHour) : "Đang cập nhật"}
+                                            </span>
                                         </div>
                                     </div>
 
@@ -404,7 +351,7 @@ export default function PublicRestaurantDetailsPage() {
                             </Card>
                         </section>
                     </>
-                )}
+                ) : null}
             </div>
         </PublicRestaurantsLayout>
     )

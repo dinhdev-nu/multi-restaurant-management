@@ -24,6 +24,7 @@ export interface FeedUser {
 
 export interface NearbyRestaurant {
   id: string
+  slug: string
   name: string
   image: string
   rating: number
@@ -34,6 +35,7 @@ export interface NearbyRestaurant {
 }
 
 export interface PostRestaurant {
+  slug: string
   name: string
   avatar: string
   verified: boolean

@@ -171,10 +171,36 @@ export async function deleteRestaurant(restaurantId: string): Promise<DeleteRest
 export async function searchPublicRestaurants(
   query: PublicRestaurantsSearchQuery
 ): Promise<PaginatedResponse<PublicRestaurantSearchItem>> {
+  const params = new URLSearchParams()
+
+  const appendParam = (key: string, value: string | number | boolean | null | undefined) => {
+    if (value === undefined || value === null) return
+    params.append(key, String(value))
+  }
+
+  const appendArrayParam = (key: string, value: Array<string | number | boolean> | undefined) => {
+    if (!value?.length) return
+    for (const item of value) {
+      params.append(key, String(item))
+    }
+  }
+
+  appendParam("city", query.city)
+  appendParam("cuisine_type", query.cuisine_type)
+  appendArrayParam("price_range", query.price_range)
+  appendParam("accepts_online", query.accepts_online)
+  appendParam("lat", query.lat)
+  appendParam("lng", query.lng)
+  appendParam("radius_km", query.radius_km)
+  appendParam("q", query.q)
+  appendParam("sort", query.sort)
+  appendParam("page", query.page)
+  appendParam("limit", query.limit)
+
   const response = await apiClient.get<ApiSuccessResponse<PaginatedResponse<PublicRestaurantSearchItem>>>(
     "/public/restaurants",
     {
-      params: compactParams(query),
+      params,
     }
   )
   return unwrapResponseData(response)

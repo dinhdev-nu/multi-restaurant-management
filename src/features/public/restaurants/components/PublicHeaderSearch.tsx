@@ -14,7 +14,7 @@ const SEARCH_DEBOUNCE_MS = 250
 const DEFAULT_SEARCH_FILTERS: SearchFilters = {
     city: "",
     cuisine_type: "",
-    price_range: "",
+    price_range: [],
     accepts_online: null,
     radius_km: "5",
     sort: "name",
@@ -94,7 +94,9 @@ export default function PublicHeaderSearch({ isOpen, onOpenChange }: PublicHeade
 
         searchTimeoutRef.current = window.setTimeout(async () => {
             const trimmedQuery = searchQuery.trim()
-            const priceRangeValue = searchFilters.price_range ? Number(searchFilters.price_range) : undefined
+            const priceRangeValues = searchFilters.price_range.length
+                ? (searchFilters.price_range.map(Number) as Array<1 | 2 | 3 | 4>)
+                : undefined
             const radiusValue = searchFilters.radius_km ? Number(searchFilters.radius_km) : undefined
             const acceptsOnlineValue = searchFilters.accepts_online === null ? undefined : searchFilters.accepts_online
 
@@ -107,7 +109,7 @@ export default function PublicHeaderSearch({ isOpen, onOpenChange }: PublicHeade
                     limit: PUBLIC_RESTAURANT_LIMIT,
                     city: searchFilters.city.trim() || undefined,
                     cuisine_type: searchFilters.cuisine_type.trim() || undefined,
-                    price_range: priceRangeValue ? [priceRangeValue as 1 | 2 | 3 | 4] : undefined,
+                    price_range: priceRangeValues,
                     accepts_online: acceptsOnlineValue,
                     lat: searchFilters.lat ?? undefined,
                     lng: searchFilters.lng ?? undefined,
@@ -115,6 +117,8 @@ export default function PublicHeaderSearch({ isOpen, onOpenChange }: PublicHeade
                     q: trimmedQuery || undefined,
                     sort: searchFilters.lat !== null && searchFilters.lng !== null ? "distance" : searchFilters.sort,
                 })
+
+                console.log("Search results:", response)
 
                 setSearchResults(response.data)
             } catch (caughtError) {

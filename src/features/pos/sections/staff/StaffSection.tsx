@@ -54,8 +54,13 @@ const StaffSection: React.FC = () => {
 
     const isCardsView = viewMode === 'cards';
 
-    const handleViewDetails = async (staff: Staff) => {
-        setSelectedStaffDetail({
+    const showStaffDetails = React.useCallback((detail: StaffDetail) => {
+        setSelectedStaffDetail(detail);
+        setShowDetailsModal(true);
+    }, []);
+
+    const handleViewDetails = React.useCallback(async (staff: Staff) => {
+        const fallbackDetail: StaffDetail = {
             _id: staff._id,
             restaurant_id: staff.restaurantId || restaurantId,
             user_id: staff.userId || '',
@@ -70,24 +75,34 @@ const StaffSection: React.FC = () => {
             permissions: undefined,
             deleted_at: null,
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        });
-        setShowDetailsModal(true);
+            updated_at: new Date().toISOString(),
+        };
+
+        showStaffDetails(fallbackDetail);
 
         try {
             const detail = await getRestaurantStaffDetail(restaurantId, staff._id);
-            setSelectedStaffDetail(detail);
+            showStaffDetails(detail);
         } catch (error) {
             toast.error(toStaffEndpointError('detail', error).message);
         }
-    };
+    }, [restaurantId, showStaffDetails]);
 
-    const handleDeleteRequest = (staff: Staff) => {
+    const handleEditStaff = React.useCallback((staff: Staff) => {
+        void openEditModal(staff, setSelectedStaffDetail);
+    }, [openEditModal]);
+
+    const handleEditStaffFromDetails = React.useCallback((staff: Staff, detail?: StaffDetail | null) => {
+        setShowDetailsModal(false);
+        void openEditModal(staff, setSelectedStaffDetail, detail ?? selectedStaffDetail);
+    }, [openEditModal, selectedStaffDetail]);
+
+    const handleDeleteRequest = React.useCallback((staff: Staff) => {
         setStaffToDelete(staff);
         setShowDeleteConfirm(true);
-    };
+    }, []);
 
-    const handleDeleteConfirm = async () => {
+    const handleDeleteConfirm = React.useCallback(async () => {
         if (!staffToDelete) return;
         try {
             await deleteStaff(staffToDelete._id);
@@ -95,7 +110,11 @@ const StaffSection: React.FC = () => {
             setShowDeleteConfirm(false);
             setStaffToDelete(null);
         }
-    };
+    }, [deleteStaff, staffToDelete]);
+
+    const selectedStaffCard = React.useMemo(() => (
+        selectedStaffDetail ? mapDetailToCard(selectedStaffDetail) : null
+    ), [selectedStaffDetail]);
 
     return (
         <div>
@@ -126,7 +145,7 @@ const StaffSection: React.FC = () => {
                                 <StaffCard
                                     key={staff._id}
                                     staff={staff}
-                                    onEdit={(s) => openEditModal(s, setSelectedStaffDetail)}
+                                    onEdit={handleEditStaff}
                                     onToggleStatus={toggleStatus}
                                     onViewDetails={handleViewDetails}
                                     onDelete={handleDeleteRequest}
@@ -136,7 +155,7 @@ const StaffSection: React.FC = () => {
                     ) : (
                         <StaffTable
                             staff={staffData}
-                            onEdit={(s) => openEditModal(s, setSelectedStaffDetail)}
+                            onEdit={handleEditStaff}
                             onToggleStatus={toggleStatus}
                             onViewDetails={handleViewDetails}
                             onDelete={handleDeleteRequest}
@@ -204,16 +223,13 @@ const StaffSection: React.FC = () => {
                 mode={staffModalMode}
                 isLoading={isSubmitting}
             />
-            
+
             <StaffDetailsModal
                 isOpen={showDetailsModal}
                 onClose={() => setShowDetailsModal(false)}
-                staff={selectedStaffDetail ? mapDetailToCard(selectedStaffDetail) : null}
+                staff={selectedStaffCard}
                 detail={selectedStaffDetail}
-                onEdit={(s) => {
-                    setShowDetailsModal(false);
-                    openEditModal(s, setSelectedStaffDetail);
-                }}
+                onEdit={handleEditStaffFromDetails}
             />
 
             <ConfirmationDialog

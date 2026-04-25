@@ -18,7 +18,7 @@ export function DashboardLayout({
         <div className={`analysis-reporting ${theme} min-h-screen bg-background overflow-hidden`}>
             {sidebar}
             <div
-                className={`flex flex-col h-screen transition-all duration-300 ease-out ${sidebarCollapsed ? "ml-[72px]" : "ml-[260px]"}`}
+                className={`dashboard-main-shell flex flex-col h-screen ${sidebarCollapsed ? "ml-[72px]" : "ml-[260px]"}`}
             >
                 {header}
                 <main className="flex-1 p-6 overflow-auto">

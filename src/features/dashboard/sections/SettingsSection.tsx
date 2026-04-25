@@ -1,22 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { RestaurantProfileRegistrationForm } from "@/features/dashboard/components/RestaurantProfileRegistrationForm";
+import { updateRestaurantOnlineOrders, updateRestaurantPublishStatus } from "@/services/restaurants";
+import { toAppError } from "@/services/error";
 import {
     CreateRestaurantProvider,
     useCreateRestaurantActions,
     useCreateRestaurantMeta,
 } from "@/features/new/FormProvider";
+import type { Restaurant, RestaurantStaffDetail } from "@/types/restaurant-type";
+import { toast } from "sonner";
 import {
     User,
     Bell,
     Shield,
     Link2,
-    Mail,
-    Smartphone,
     ExternalLink,
     Zap,
     Loader2,
@@ -29,14 +31,6 @@ interface Integration {
     description: string;
     connected: boolean;
     lastSync: string | null;
-}
-
-interface NotificationSetting {
-    id: string;
-    label: string;
-    description: string;
-    email: boolean;
-    push: boolean;
 }
 
 interface Tab {
@@ -54,24 +48,56 @@ const integrations: Integration[] = [
     { id: "zoom", name: "Zoom", description: "Tích hợp hội nghị trực tuyến", connected: false, lastSync: null },
 ];
 
-const notificationSettings: NotificationSetting[] = [
-    { id: "deal_updates", label: "Cập nhật giao dịch", description: "Nhận thông báo khi giao dịch thay đổi trạng thái", email: true, push: true },
-    { id: "staff_activity", label: "Hoạt động nhân viên", description: "Cập nhật về hiệu suất và mốc quan trọng của nhân viên", email: true, push: false },
-    { id: "pipeline_alerts", label: "Cảnh báo quy trình", description: "Cảnh báo thay đổi và rủi ro quy trình", email: true, push: true },
-    { id: "forecast_updates", label: "Cập nhật dự báo", description: "Báo cáo tổng kết dự báo hàng tuần", email: true, push: false },
-    { id: "acceptance_requests", label: "Yêu cầu cần chấp nhận", description: "Thông báo về các yêu cầu chấp nhận", email: false, push: true },
-];
-
 const tabs: Tab[] = [
     { id: "profile", label: "Hồ sơ", icon: User },
-    { id: "notifications", label: "Thông báo", icon: Bell },
+    { id: "notifications", label: "Trạng thái", icon: Bell },
     { id: "integrations", label: "Tích hợp", icon: Link2 },
     { id: "security", label: "Bảo mật", icon: Shield },
 ];
 
-function RestaurantProfileMainContent() {
-    const { submitForm } = useCreateRestaurantActions();
+function RestaurantProfileMainContent({ restaurantDetail }: { restaurantDetail?: Restaurant | RestaurantStaffDetail | null }) {
+    const { submitForm, setField, setImagePreviews } = useCreateRestaurantActions();
     const { isSubmitting, isUploadingAssets } = useCreateRestaurantMeta();
+    const hasPopulatedRef = useRef(false);
+
+    // Populate form with restaurant data on mount only
+    useEffect(() => {
+        if (!restaurantDetail || hasPopulatedRef.current) return;
+
+        hasPopulatedRef.current = true;
+
+        // Populate all fields from restaurantDetail
+        setField('name', restaurantDetail.name || '');
+        if (restaurantDetail.slug) setField('slug', restaurantDetail.slug);
+        if (restaurantDetail.description) setField('description', restaurantDetail.description);
+        if (restaurantDetail.logo_url) setField('logo_url', restaurantDetail.logo_url);
+        if (restaurantDetail.cover_image_url) setField('cover_image_url', restaurantDetail.cover_image_url);
+        if (restaurantDetail.website) setField('website', restaurantDetail.website);
+        if (restaurantDetail.cuisine_type) setField('cuisine_type', restaurantDetail.cuisine_type);
+        if (restaurantDetail.price_range) setField('price_range', restaurantDetail.price_range);
+        if (restaurantDetail.address) setField('address', restaurantDetail.address);
+        if (restaurantDetail.city) setField('city', restaurantDetail.city);
+        if (restaurantDetail.district) setField('district', restaurantDetail.district);
+        if (restaurantDetail.ward) setField('ward', restaurantDetail.ward);
+        if (restaurantDetail.phone) setField('phone', restaurantDetail.phone);
+        if (restaurantDetail.email) setField('email', restaurantDetail.email);
+        if (restaurantDetail.latitude !== undefined && restaurantDetail.latitude !== null) setField('latitude', restaurantDetail.latitude);
+        if (restaurantDetail.longitude !== undefined && restaurantDetail.longitude !== null) setField('longitude', restaurantDetail.longitude);
+        if (restaurantDetail.timezone) setField('timezone', restaurantDetail.timezone);
+        if (restaurantDetail.operating_hours) setField('operating_hours', restaurantDetail.operating_hours);
+        if (restaurantDetail.gallery_urls && restaurantDetail.gallery_urls.length > 0) {
+            setField('gallery_urls', restaurantDetail.gallery_urls);
+        }
+
+        // Set image previews from existing URLs
+        if (setImagePreviews) {
+            setImagePreviews(
+                restaurantDetail.logo_url,
+                restaurantDetail.cover_image_url,
+                restaurantDetail.gallery_urls
+            );
+        }
+    }, [restaurantDetail, setField, setImagePreviews]);
 
     return (
         <form onSubmit={submitForm} className="space-y-6">
@@ -97,10 +123,63 @@ function RestaurantProfileMainContent() {
     );
 }
 
-export function SettingsSection() {
+interface SettingsSectionProps {
+    restaurantDetail?: Restaurant | RestaurantStaffDetail | null;
+}
+
+export function SettingsSection({ restaurantDetail }: SettingsSectionProps) {
     const DELETE_CONFIRM_TEXT = "XOA NHA HANG";
     const [activeTab, setActiveTab] = useState("profile");
     const [deleteRestaurantConfirmText, setDeleteRestaurantConfirmText] = useState("");
+    const [isPublishing, setIsPublishing] = useState(false);
+    const [isTogglingOnlineOrders, setIsTogglingOnlineOrders] = useState(false);
+    const [publishEnabled, setPublishEnabled] = useState(Boolean(restaurantDetail?.is_published));
+    const [onlineOrdersEnabled, setOnlineOrdersEnabled] = useState(Boolean(restaurantDetail?.accepts_online_orders));
+
+    useEffect(() => {
+        setPublishEnabled(Boolean(restaurantDetail?.is_published));
+        setOnlineOrdersEnabled(Boolean(restaurantDetail?.accepts_online_orders));
+    }, [restaurantDetail?.is_published, restaurantDetail?.accepts_online_orders]);
+
+    const restaurantId = restaurantDetail?._id;
+
+    const handlePublishChange = async (checked: boolean) => {
+        if (!restaurantId) return;
+
+        const previous = publishEnabled;
+        setPublishEnabled(checked);
+        setIsPublishing(true);
+
+        try {
+            await updateRestaurantPublishStatus(restaurantId, { is_published: checked });
+            toast.success(checked ? "Nhà hàng đã được xuất bản" : "Nhà hàng đã được ẩn");
+        } catch (error) {
+            setPublishEnabled(previous);
+            const appError = toAppError(error, "Không thể cập nhật trạng thái xuất bản");
+            toast.error(appError.message);
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+
+    const handleOnlineOrdersChange = async (checked: boolean) => {
+        if (!restaurantId) return;
+
+        const previous = onlineOrdersEnabled;
+        setOnlineOrdersEnabled(checked);
+        setIsTogglingOnlineOrders(true);
+
+        try {
+            await updateRestaurantOnlineOrders(restaurantId, { accepts_online_orders: checked });
+            toast.success(checked ? "Đã bật nhận đơn online" : "Đã tắt nhận đơn online");
+        } catch (error) {
+            setOnlineOrdersEnabled(previous);
+            const appError = toAppError(error, "Không thể cập nhật trạng thái nhận đơn online");
+            toast.error(appError.message);
+        } finally {
+            setIsTogglingOnlineOrders(false);
+        }
+    };
 
     const handleDeleteRestaurant = () => {
         if (deleteRestaurantConfirmText.trim().toUpperCase() !== DELETE_CONFIRM_TEXT) {
@@ -144,8 +223,8 @@ export function SettingsSection() {
 
             {/* Profile Tab */}
             {activeTab === "profile" && (
-                <CreateRestaurantProvider>
-                    <RestaurantProfileMainContent />
+                <CreateRestaurantProvider isEditing={true} restaurantId={restaurantDetail?._id}>
+                    <RestaurantProfileMainContent restaurantDetail={restaurantDetail} />
                 </CreateRestaurantProvider>
             )}
 
@@ -153,40 +232,48 @@ export function SettingsSection() {
             {activeTab === "notifications" && (
                 <Card className="border-border bg-card">
                     <CardHeader>
-                        <CardTitle className="text-base font-medium">Tùy chọn thông báo</CardTitle>
-                        <CardDescription>Chọn cách và khi nào bạn muốn nhận thông báo</CardDescription>
+                        <CardTitle className="text-base font-medium">Trạng thái hoạt động</CardTitle>
+                        <CardDescription>Điều khiển trạng thái xuất bản và nhận đơn online của nhà hàng</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-1">
-                            <div className="grid grid-cols-[1fr,80px,80px] gap-4 pb-3 border-b border-border text-sm text-muted-foreground">
-                                <span>Loại thông báo</span>
-                                <span className="text-center flex items-center justify-center gap-1.5">
-                                    <Mail className="w-4 h-4" />
-                                    Email
-                                </span>
-                                <span className="text-center flex items-center justify-center gap-1.5">
-                                    <Smartphone className="w-4 h-4" />
-                                    Push
-                                </span>
-                            </div>
-                            {notificationSettings.map((notification, index) => (
-                                <div
-                                    key={notification.id}
-                                    className="grid grid-cols-[1fr,80px,80px] gap-4 py-4 border-b border-border last:border-0 animate-in fade-in slide-in-from-left-2"
-                                    style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                    <div>
-                                        <p className="font-medium text-foreground">{notification.label}</p>
-                                        <p className="text-sm text-muted-foreground">{notification.description}</p>
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-secondary/20 p-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-medium text-foreground">Xuất bản nhà hàng</p>
+                                        <Badge className={publishEnabled ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/20" : "bg-muted text-muted-foreground border-border"}>
+                                            {publishEnabled ? "Đang hiển thị" : "Đang ẩn"}
+                                        </Badge>
                                     </div>
-                                    <div className="flex items-center justify-center">
-                                        <Switch checked={notification.email} />
-                                    </div>
-                                    <div className="flex items-center justify-center">
-                                        <Switch checked={notification.push} />
-                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Bật để nhà hàng xuất hiện trên các trang công khai.
+                                    </p>
                                 </div>
-                            ))}
+                                <Switch
+                                    checked={publishEnabled}
+                                    onCheckedChange={handlePublishChange}
+                                    disabled={!restaurantId || isPublishing}
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-secondary/20 p-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-medium text-foreground">Nhận đơn online</p>
+                                        <Badge className={onlineOrdersEnabled ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/20" : "bg-muted text-muted-foreground border-border"}>
+                                            {onlineOrdersEnabled ? "Đang bật" : "Đang tắt"}
+                                        </Badge>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Cho phép khách đặt món trực tuyến cho nhà hàng này.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={onlineOrdersEnabled}
+                                    onCheckedChange={handleOnlineOrdersChange}
+                                    disabled={!restaurantId || isTogglingOnlineOrders}
+                                />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

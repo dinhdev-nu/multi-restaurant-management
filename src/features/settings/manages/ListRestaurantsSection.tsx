@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { getOwnerRestaurants } from "@/services/restaurants";
 import type { OwnerRestaurantListItem } from "@/types/restaurant-type";
+import { useNavigate } from "react-router-dom";
 import {
     MapPin,
     Mail,
@@ -62,6 +63,7 @@ function getHealthTextClass(score: number) {
 }
 
 export function ListRestaurantsSection() {
+    const navigate = useNavigate();
     const [restaurants, setRestaurants] = useState<OwnerRestaurantListItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -74,8 +76,8 @@ export function ListRestaurantsSection() {
                 setIsLoading(true);
                 setError(null);
 
-                const response = await getOwnerRestaurants({ page: 1, limit: 6 });
-
+                const response = await getOwnerRestaurants({ page: 1, limit: 10 });
+                console.log("Fetched restaurants:", response);
                 if (!isActive) return;
 
                 setRestaurants(response.data);
@@ -155,6 +157,8 @@ export function ListRestaurantsSection() {
                         const readinessScore = getRestaurantReadinessScore(restaurant);
                         const trend = getRestaurantTrend(restaurant);
                         const tier: RestaurantTier = restaurant.is_published ? "Công khai" : "Bản nháp";
+                        const needsVerification =
+                            !restaurant.is_published || !restaurant.accepts_online_orders;
 
                         return (
                             <Card
@@ -165,7 +169,11 @@ export function ListRestaurantsSection() {
                                 <CardContent className="flex h-full flex-col p-5">
                                     <div className="mb-4 flex min-w-0 items-start justify-between gap-3">
                                         <div className="flex min-w-0 items-center gap-3">
-                                            <Avatar className="w-12 h-12">
+                                            <Avatar className="size-12">
+                                                <AvatarImage
+                                                    src={restaurant.logo_url ?? undefined}
+                                                    alt={restaurant.name}
+                                                />
                                                 <AvatarFallback className="bg-secondary text-foreground font-semibold text-sm">
                                                     {restaurant.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                                                 </AvatarFallback>
@@ -178,7 +186,7 @@ export function ListRestaurantsSection() {
                                             </div>
                                         </div>
                                         <Badge className={`${tierColors[tier]} shrink-0 border`}>
-                                            {tier === "Công khai" ? "Công khai" : "Bản nháp"}
+                                            {tier === "Công khai" ? "Công khai" : "Bản nháp - Cần xác nhận"}
                                         </Badge>
                                     </div>
 
@@ -255,9 +263,29 @@ export function ListRestaurantsSection() {
                                             <Store className="w-3.5 h-3.5 mr-1.5" />
                                             Bán hàng
                                         </Button>
-                                        <Button variant="outline" size="sm" className="h-10 flex-1 bg-transparent">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-10 flex-1 bg-transparent"
+                                            onClick={() =>
+                                                navigate(`/dashboard/${restaurant._id}`, {
+                                                    state: {
+                                                        restaurant: {
+                                                            _id: restaurant._id,
+                                                            name: restaurant.name,
+                                                            logo_url: restaurant.logo_url,
+                                                        },
+                                                    },
+                                                })
+                                            }
+                                            title={
+                                                needsVerification
+                                                    ? "Xác nhận nhà hàng: bật đặt hàng và publish cho khách"
+                                                    : "Mở trang quản lý"
+                                            }
+                                        >
                                             <Settings className="w-3.5 h-3.5 mr-1.5" />
-                                            Quản lý
+                                            {needsVerification ? "Quản lý xác nhận" : "Quản lý"}
                                         </Button>
                                         <Button variant="ghost" size="sm" aria-label={`Chia sẻ ${restaurant.name}`}>
                                             <Share2 className="w-4 h-4" />

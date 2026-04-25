@@ -39,6 +39,7 @@ export interface CreateRestaurantActions {
     uploadImage: (event: React.ChangeEvent<HTMLInputElement>, type: ImageUploadType) => void;
     submit: () => Promise<void>;
     submitForm: (event: React.FormEvent<HTMLFormElement>) => void;
+    setImagePreviews?: (logoUrl?: string | null, coverUrl?: string | null, galleryUrls?: string[]) => void;
 }
 
 export interface CreateRestaurantMeta {
@@ -183,7 +184,13 @@ async function uploadByCount(files: File[]) {
     return uploadMultipleFiles(files);
 }
 
-export function CreateRestaurantProvider({ children }: { children: React.ReactNode }) {
+export interface CreateRestaurantProviderProps {
+    children: React.ReactNode;
+    isEditing?: boolean;
+    restaurantId?: string;
+}
+
+export function CreateRestaurantProvider({ children, isEditing = false }: CreateRestaurantProviderProps) {
     const navigate = useNavigate();
     const hasAttemptedAutoLocationRef = useRef(false);
     const slugCheckRequestIdRef = useRef(0);
@@ -282,6 +289,12 @@ export function CreateRestaurantProvider({ children }: { children: React.ReactNo
     }, [requestCurrentLocation]);
 
     useEffect(() => {
+        // Skip slug checking if we're in edit mode
+        if (isEditing) {
+            setSlugCheckStatus('idle');
+            return;
+        }
+
         const normalizedSlug = (formData.slug ?? '').trim();
 
         if (!normalizedSlug) {
@@ -416,6 +429,12 @@ export function CreateRestaurantProvider({ children }: { children: React.ReactNo
         }));
     }, []);
 
+    const setImagePreviews = useCallback((logoUrl?: string | null, coverUrl?: string | null, galleryUrls?: string[]) => {
+        if (logoUrl) setLogoPreview(logoUrl);
+        if (coverUrl) setCoverPreview(coverUrl);
+        if (galleryUrls && galleryUrls.length > 0) setGalleryPreviews(galleryUrls);
+    }, []);
+
     const uploadImage = useCallback(async (event: React.ChangeEvent<HTMLInputElement>, type: ImageUploadType) => {
         const files = Array.from(event.target.files ?? []);
 
@@ -527,6 +546,9 @@ export function CreateRestaurantProvider({ children }: { children: React.ReactNo
     }, []);
 
     const validateSlugAvailability = useCallback(async (slug?: string): Promise<boolean> => {
+        // Skip slug validation in edit mode
+        if (isEditing) return true;
+
         if (!slug) return true;
 
         const normalizedSlug = slug.trim();
@@ -644,10 +666,12 @@ export function CreateRestaurantProvider({ children }: { children: React.ReactNo
         uploadImage,
         submit,
         submitForm,
+        setImagePreviews: setImagePreviews as any,
     }), [
         setField,
         changeTextField,
         changeNumberField,
+        setImagePreviews,
         changeOperatingClosed,
         changeOperatingTime,
         requestCurrentLocation,

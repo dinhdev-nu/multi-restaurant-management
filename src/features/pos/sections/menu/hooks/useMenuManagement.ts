@@ -100,11 +100,6 @@ export function useMenuManagement(restaurantId: string) {
     const fetchMenuData = React.useCallback(async (silent = false) => {
         if (!silent) setIsLoadingData(true);
         try {
-            // Fetch categories
-            const cats = await listMenuCategories(restaurantId, { include_inactive: true });
-            setCategories(cats.data);
-
-            // Fetch items
             const queryParams: ListMenuItemsQuery = { page, limit };
             if (filterCategory !== 'all') {
                 queryParams.category_id = filterCategory;
@@ -116,7 +111,10 @@ export function useMenuManagement(restaurantId: string) {
                 queryParams.is_featured = filterFeatured === 'featured';
             }
 
-            const itemsRes = await listMenuItems(restaurantId, queryParams);
+            const [cats, itemsRes] = await Promise.all([
+                listMenuCategories(restaurantId, { include_inactive: true }),
+                listMenuItems(restaurantId, queryParams),
+            ]);
             const serverHasData = cats.data.length > 0 || itemsRes.data.length > 0;
 
             if (serverHasData) {
@@ -127,7 +125,7 @@ export function useMenuManagement(restaurantId: string) {
             } else {
                 applyMockData();
             }
-            
+
         } catch (error) {
             applyMockData();
             toast.error(`${toMenuEndpointError('list', error).message}. Đang hiển thị dữ liệu mẫu để kiểm tra giao diện.`);

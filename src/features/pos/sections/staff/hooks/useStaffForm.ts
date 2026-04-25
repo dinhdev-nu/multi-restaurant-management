@@ -45,25 +45,29 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
     // Track the original detail to compare diffs (like avatar/status changes)
     const [originalDetail, setOriginalDetail] = React.useState<StaffDetail | null>(null);
 
-    const resetForm = () => {
+    const resetForm = React.useCallback(() => {
         setStaffFormData(DEFAULT_FORM_DATA);
         setOriginalDetail(null);
-    };
+    }, []);
 
-    const openAddModal = () => {
+    const openAddModal = React.useCallback(() => {
         setStaffModalMode('add');
         setEditingStaffId(null);
         resetForm();
         setShowStaffModal(true);
-    };
+    }, [resetForm]);
 
-    const openEditModal = async (staff: Staff, externalDetailSetter?: (detail: StaffDetail) => void) => {
+    const openEditModal = React.useCallback(async (
+        staff: Staff,
+        externalDetailSetter?: (detail: StaffDetail) => void,
+        knownDetail?: StaffDetail | null,
+    ) => {
         setStaffModalMode('edit');
         setEditingStaffId(staff._id);
         setShowStaffModal(true);
 
         try {
-            const detail = await getRestaurantStaffDetail(restaurantId, staff._id);
+            const detail = knownDetail ?? await getRestaurantStaffDetail(restaurantId, staff._id);
             if (externalDetailSetter) externalDetailSetter(detail);
             setOriginalDetail(detail);
 
@@ -90,11 +94,11 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
         } catch (error) {
             toast.error(toStaffEndpointError('detail', error).message);
         }
-    };
+    }, [restaurantId]);
 
-    const handleFieldChange = (field: keyof StaffFormData, value: string | boolean | typeof DEFAULT_FORM_DATA.permissions) => {
+    const handleFieldChange = React.useCallback((field: keyof StaffFormData, value: string | boolean | typeof DEFAULT_FORM_DATA.permissions) => {
         setStaffFormData((prev) => ({ ...prev, [field]: value }));
-    };
+    }, []);
 
     const handleSubmit = async () => {
         if (!staffFormData.name || !staffFormData.role) {
@@ -137,24 +141,30 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
                     email: staffFormData.email.trim() || undefined,
                 });
 
+                const updateTasks: Array<Promise<unknown>> = [];
+
                 if (staffFormData.userId.trim() && staffFormData.userId.trim() !== originalDetail?.user_id) {
-                    await linkRestaurantStaffAccount(restaurantId, editingStaffId, {
+                    updateTasks.push(linkRestaurantStaffAccount(restaurantId, editingStaffId, {
                         user_id: staffFormData.userId.trim(),
-                    });
+                    }));
                 }
 
                 if (staffFormData.status && originalDetail?.status !== staffFormData.status) {
-                    await updateRestaurantStaffStatus(restaurantId, editingStaffId, {
+                    updateTasks.push(updateRestaurantStaffStatus(restaurantId, editingStaffId, {
                         status: staffFormData.status as StaffStatus,
-                    });
+                    }));
                 }
 
                 if (staffFormData.avatar && staffFormData.avatar !== originalDetail?.avatar_url && /^https?:\/\//.test(staffFormData.avatar)) {
-                    await updateRestaurantStaffAvatar(restaurantId, editingStaffId, { avatar_url: staffFormData.avatar });
+                    updateTasks.push(updateRestaurantStaffAvatar(restaurantId, editingStaffId, { avatar_url: staffFormData.avatar }));
                 }
-                
+
                 if (staffFormData.permissions) {
-                    await updateRestaurantStaffPermissions(restaurantId, editingStaffId, staffFormData.permissions);
+                    updateTasks.push(updateRestaurantStaffPermissions(restaurantId, editingStaffId, staffFormData.permissions));
+                }
+
+                if (updateTasks.length > 0) {
+                    await Promise.all(updateTasks);
                 }
 
                 toast.success('Cập nhật nhân viên thành công');

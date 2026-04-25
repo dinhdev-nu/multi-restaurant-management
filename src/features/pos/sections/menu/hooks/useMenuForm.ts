@@ -28,29 +28,32 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
     const [showItemModal, setShowItemModal] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [editingItemId, setEditingItemId] = React.useState<string | null>(null);
+    const [editingItemDetail, setEditingItemDetail] = React.useState<MenuItem | null>(null);
     const [formData, setFormData] = React.useState<MenuItemFormData>(DEFAULT_MENU_ITEM);
     const [imageFile, setImageFile] = React.useState<File | null>(null);
     const [imagePreviewUrl, setImagePreviewUrl] = React.useState('');
 
-    const resetForm = () => {
+    const resetForm = React.useCallback(() => {
         setFormData(DEFAULT_MENU_ITEM);
         setEditingItemId(null);
+        setEditingItemDetail(null);
         setImageFile(null);
         setImagePreviewUrl('');
-    };
+    }, []);
 
-    const openAddItem = () => {
+    const openAddItem = React.useCallback(() => {
         resetForm();
         setShowItemModal(true);
-    };
+    }, [resetForm]);
 
-    const openEditItem = async (item: MenuItem) => {
+    const openEditItem = React.useCallback(async (item: MenuItem) => {
         setIsSubmitting(true);
         try {
             const detail = await getMenuItemDetail(restaurantId, item._id);
             const firstImage = detail.images?.[0]?.url || '';
 
             setEditingItemId(detail._id);
+            setEditingItemDetail(detail);
             setFormData({
                 name: detail.name,
                 description: detail.description || '',
@@ -68,17 +71,17 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [restaurantId]);
 
-    const handleFieldChange = (field: keyof MenuItemFormData, value: string) => {
+    const handleFieldChange = React.useCallback((field: keyof MenuItemFormData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         if (field === 'imageUrl') {
             setImagePreviewUrl(value.trim());
             setImageFile(null);
         }
-    };
+    }, []);
 
-    const handleImageFileChange = (file: File | null) => {
+    const handleImageFileChange = React.useCallback((file: File | null) => {
         setImageFile(file);
         if (!file) {
             setImagePreviewUrl(formData.imageUrl.trim());
@@ -86,7 +89,7 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
         }
         const objectUrl = URL.createObjectURL(file);
         setImagePreviewUrl(objectUrl);
-    };
+    }, [formData.imageUrl]);
 
     const handleSubmit = async () => {
         if (!formData.name || !formData.price || !formData.category) {
@@ -108,7 +111,7 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
             }
 
             if (editingItemId) {
-                const current = await getMenuItemDetail(restaurantId, editingItemId);
+                const current = editingItemDetail ?? await getMenuItemDetail(restaurantId, editingItemId);
                 await updateMenuItem(restaurantId, editingItemId, {
                     name: formData.name.trim(),
                     description: formData.description.trim() || undefined,

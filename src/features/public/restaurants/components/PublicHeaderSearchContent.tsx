@@ -1,6 +1,7 @@
 import { ChevronRight, Clock3, Search, Store } from "lucide-react"
 
 import AppImage from "@/components/AppImage"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
     Select,
     SelectContent,
@@ -16,7 +17,7 @@ const FALLBACK_RESTAURANT_IMAGE = "/assets/home/image.png"
 export type SearchFilters = {
     city: string
     cuisine_type: string
-    price_range: string
+    price_range: string[]
     accepts_online: boolean | null
     radius_km: string
     sort: "name" | "distance"
@@ -119,18 +120,25 @@ export default function PublicHeaderSearchContent({
 
                 <label className="space-y-1 text-xs">
                     <span className="font-medium text-muted-foreground">Price</span>
-                    <Select value={searchFilters.price_range} onValueChange={(value) => onFilterChange("price_range", value)} onOpenChange={onSelectOpenChange}>
-                        <SelectTrigger size="sm" className="h-9 w-full rounded-xl border-border bg-background px-3 text-sm text-foreground">
-                            <SelectValue placeholder="Tất cả" />
-                        </SelectTrigger>
-                        <SelectContent position="popper" sideOffset={6} className="min-w-[12rem]">
-                            {PRICE_RANGES.map((priceRange) => (
-                                <SelectItem key={priceRange} value={String(priceRange)}>
-                                    {"$".repeat(priceRange)}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <ToggleGroup
+                        type="multiple"
+                        value={searchFilters.price_range}
+                        onValueChange={(value) => onFilterChange("price_range", value)}
+                        variant="outline"
+                        size="sm"
+                        spacing={0}
+                        className="grid w-full grid-cols-4 overflow-hidden rounded-xl border border-border bg-background"
+                    >
+                        {PRICE_RANGES.map((priceRange) => (
+                            <ToggleGroupItem
+                                key={priceRange}
+                                value={String(priceRange)}
+                                className="h-9 flex-1 rounded-none border-0 text-xs font-semibold text-muted-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                            >
+                                {"$".repeat(priceRange)}
+                            </ToggleGroupItem>
+                        ))}
+                    </ToggleGroup>
                 </label>
 
                 <label className="space-y-1 text-xs">

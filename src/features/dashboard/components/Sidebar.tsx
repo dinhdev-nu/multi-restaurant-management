@@ -13,6 +13,13 @@ import {
     Settings,
     type LucideIcon,
 } from "lucide-react";
+import AppImage from "@/components/AppImage";
+
+type SidebarRestaurant = {
+    _id: string;
+    name: string;
+    logo_url?: string | null;
+};
 
 type SectionId =
     | "overview"
@@ -31,6 +38,7 @@ interface NavItem {
 }
 
 interface SidebarProps {
+    restaurant?: SidebarRestaurant | null;
     activeSection: SectionId;
     onSectionChange: (section: SectionId) => void;
     collapsed: boolean;
@@ -49,6 +57,7 @@ const navItems: NavItem[] = [
 ];
 
 export function Sidebar({
+    restaurant,
     activeSection,
     onSectionChange,
     collapsed,
@@ -57,23 +66,31 @@ export function Sidebar({
     return (
         <aside
             className={cn(
-                "fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-out flex flex-col",
+                "dashboard-sidebar-shell fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border flex flex-col",
                 collapsed ? "w-[72px]" : "w-[260px]"
             )}
         >
             {/* Logo */}
-            <div className="h-16 flex items-center px-4 border-b border-sidebar-border">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-white">
-                        <CircleDollarSign className="w-5 h-5 text-accent" />
+            <div className="h-16 flex items-center px-4 border-b border-sidebar-border overflow-hidden">
+                <div className={cn("flex items-center min-w-0 dashboard-sidebar-label", collapsed ? "gap-0" : "gap-3")}>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-hidden bg-white ring-1 ring-sidebar-border/60">
+                        {restaurant?.logo_url ? (
+                            <AppImage
+                                src={restaurant.logo_url}
+                                alt={restaurant.name}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <CircleDollarSign className="w-5 h-5 text-accent" />
+                        )}
                     </div>
                     <span
                         className={cn(
-                            "font-semibold text-lg text-sidebar-foreground whitespace-nowrap transition-all duration-300",
-                            collapsed ? "opacity-0 w-0" : "opacity-100 w-auto"
+                            "dashboard-sidebar-title font-semibold text-lg text-sidebar-foreground whitespace-nowrap overflow-hidden",
+                            collapsed ? "max-w-0 opacity-0 translate-x-[-6px]" : "max-w-[180px] opacity-100 translate-x-0"
                         )}
                     >
-                        SalesOps
+                        {restaurant?.name ?? "SalesOps"}
                     </span>
                 </div>
             </div>
@@ -89,7 +106,8 @@ export function Sidebar({
                             key={item.id}
                             onClick={() => onSectionChange(item.id)}
                             className={cn(
-                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
+                                "dashboard-sidebar-nav-item w-full flex items-center rounded-lg text-sm font-medium group relative overflow-hidden",
+                                collapsed ? "justify-center px-2 py-2.5" : "justify-start gap-3 px-3 py-2.5",
                                 isActive
                                     ? "bg-sidebar-accent text-sidebar-foreground"
                                     : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -110,8 +128,8 @@ export function Sidebar({
                             />
                             <span
                                 className={cn(
-                                    "whitespace-nowrap transition-all duration-300",
-                                    collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
+                                    "whitespace-nowrap overflow-hidden transition-all duration-400 ease-in-out",
+                                    collapsed ? "max-w-0 opacity-0 translate-x-[-6px]" : "max-w-[160px] opacity-100 translate-x-0"
                                 )}
                             >
                                 {item.label}
@@ -125,7 +143,7 @@ export function Sidebar({
             <div className="p-3 border-t border-sidebar-border">
                 <button
                     onClick={() => onCollapsedChange(!collapsed)}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200"
+                    className="dashboard-sidebar-collapse-button w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                 >
                     {collapsed ? (
                         <ChevronRight className="w-5 h-5" />
