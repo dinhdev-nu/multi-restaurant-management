@@ -2,34 +2,16 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { PosTables } from '@/types/pos-init-type';
 import type { StaffSummary } from '@/types/staff-type';
-
-export type POSSection = 'main-pos' | 'table' | 'payment' | 'order' | 'menu' | 'staff';
-
-export interface MenuItem {
-  _id: string;
-  name: string;
-  price: number;
-  image?: string;
-  description?: string;
-  stock_quantity?: number;
-  status?: 'available' | 'unavailable';
-  icon?: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  icon?: string;
-}
+import type { MenuCategoryWithCount, MenuItem } from '@/types/menu-type';
 
 export interface POSState {
   tables: PosTables | null;
-  menuCategories: Category[];
+  menuCategories: MenuCategoryWithCount[];
   menuItems: MenuItem[];
   staffs: StaffSummary[];
 
   setTables: (tables: PosTables) => void;
-  setMenuCategories: (categories: Category[]) => void;
+  setMenuCategories: (categories: MenuCategoryWithCount[]) => void;
   setMenuItems: (items: MenuItem[]) => void;
   setStaffs: (staffs: StaffSummary[]) => void;
 }

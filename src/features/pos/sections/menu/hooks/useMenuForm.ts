@@ -18,8 +18,9 @@ const DEFAULT_MENU_ITEM: MenuItemFormData = {
     name: '',
     description: '',
     price: '',
+    sortOrder: '',
     category: '',
-    imageUrl: '',
+    imageUrls: [],
     status: 'available',
     featured: 'normal',
 };
@@ -27,18 +28,22 @@ const DEFAULT_MENU_ITEM: MenuItemFormData = {
 export function useMenuForm(restaurantId: string, onSuccess: () => void) {
     const [showItemModal, setShowItemModal] = React.useState(false);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [isUploadingImage, setIsUploadingImage] = React.useState(false);
     const [editingItemId, setEditingItemId] = React.useState<string | null>(null);
     const [editingItemDetail, setEditingItemDetail] = React.useState<MenuItem | null>(null);
     const [formData, setFormData] = React.useState<MenuItemFormData>(DEFAULT_MENU_ITEM);
-    const [imageFile, setImageFile] = React.useState<File | null>(null);
-    const [imagePreviewUrl, setImagePreviewUrl] = React.useState('');
+    const uploadRequestIdRef = React.useRef(0);
+
+    const areImageListsEqual = React.useCallback((a: string[], b: string[]) => {
+        if (a.length !== b.length) return false;
+        return a.every((value, index) => value === b[index]);
+    }, []);
 
     const resetForm = React.useCallback(() => {
         setFormData(DEFAULT_MENU_ITEM);
         setEditingItemId(null);
         setEditingItemDetail(null);
-        setImageFile(null);
-        setImagePreviewUrl('');
+        setIsUploadingImage(false);
     }, []);
 
     const openAddItem = React.useCallback(() => {
@@ -50,7 +55,7 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
         setIsSubmitting(true);
         try {
             const detail = await getMenuItemDetail(restaurantId, item._id);
-            const firstImage = detail.images?.[0]?.url || '';
+            const imageUrls = detail.images?.map((img) => img.url) ?? [];
 
             setEditingItemId(detail._id);
             setEditingItemDetail(detail);
@@ -58,13 +63,12 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
                 name: detail.name,
                 description: detail.description || '',
                 price: detail.base_price.toString(),
+                sortOrder: detail.sort_order.toString(),
                 category: detail.category_id,
-                imageUrl: firstImage,
+                imageUrls,
                 status: detail.is_available ? 'available' : 'unavailable',
                 featured: detail.is_featured ? 'featured' : 'normal',
             });
-            setImageFile(null);
-            setImagePreviewUrl(firstImage);
             setShowItemModal(true);
         } catch (error) {
             toast.error(toMenuEndpointError('detail', error).message);
@@ -75,21 +79,55 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
 
     const handleFieldChange = React.useCallback((field: keyof MenuItemFormData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        if (field === 'imageUrl') {
-            setImagePreviewUrl(value.trim());
-            setImageFile(null);
-        }
     }, []);
 
-    const handleImageFileChange = React.useCallback((file: File | null) => {
-        setImageFile(file);
-        if (!file) {
-            setImagePreviewUrl(formData.imageUrl.trim());
+    const handleImageFileChange = React.useCallback((files: File[]) => {
+        if (!files.length) {
             return;
         }
-        const objectUrl = URL.createObjectURL(file);
-        setImagePreviewUrl(objectUrl);
-    }, [formData.imageUrl]);
+
+        const requestId = uploadRequestIdRef.current + 1;
+        uploadRequestIdRef.current = requestId;
+        setIsUploadingImage(true);
+
+        void (async () => {
+            try {
+                const uploadedFiles = await Promise.all(files.map((file) => uploadSingleFile(file)));
+                if (uploadRequestIdRef.current !== requestId) return;
+
+                const uploadedUrls = uploadedFiles.map((uploaded) => uploaded.url);
+                setFormData((prev) => ({
+                    ...prev,
+                    imageUrls: [...prev.imageUrls, ...uploadedUrls],
+                }));
+                toast.success('Tải ảnh món ăn thành công');
+            } catch (error) {
+                if (uploadRequestIdRef.current === requestId) {
+                    toast.error('Không thể tải ảnh món ăn');
+                }
+            } finally {
+                if (uploadRequestIdRef.current === requestId) {
+                    setIsUploadingImage(false);
+                }
+            }
+        })();
+    }, []);
+
+    const handleAddImageUrl = React.useCallback((url: string) => {
+        const normalized = url.trim();
+        if (!normalized) return;
+        setFormData((prev) => ({
+            ...prev,
+            imageUrls: [...prev.imageUrls, normalized],
+        }));
+    }, []);
+
+    const handleRemoveImageAt = React.useCallback((index: number) => {
+        setFormData((prev) => ({
+            ...prev,
+            imageUrls: prev.imageUrls.filter((_, i) => i !== index),
+        }));
+    }, []);
 
     const handleSubmit = async () => {
         if (!formData.name || !formData.price || !formData.category) {
@@ -97,17 +135,28 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
             return;
         }
 
+        const normalizedSortOrder = formData.sortOrder.trim();
+        if (normalizedSortOrder) {
+            const parsed = Number(normalizedSortOrder);
+            if (!Number.isInteger(parsed) || parsed < 0) {
+                toast.error('Thứ tự hiển thị phải là số nguyên >= 0');
+                return;
+            }
+        }
+
         setIsSubmitting(true);
         try {
             const price = parseFloat(formData.price) || 0;
             const is_available = formData.status === 'available';
             const is_featured = formData.featured === 'featured';
-            const imageUrlFromInput = formData.imageUrl.trim();
+            const normalizedImageUrls = formData.imageUrls
+                .map((url) => url.trim())
+                .filter(Boolean);
 
-            let finalImageUrl = imageUrlFromInput;
-            if (imageFile) {
-                const uploaded = await uploadSingleFile(imageFile);
-                finalImageUrl = uploaded.url;
+            if (isUploadingImage) {
+                toast.error('Đang tải ảnh, vui lòng chờ trong giây lát');
+                setIsSubmitting(false);
+                return;
             }
 
             if (editingItemId) {
@@ -126,14 +175,15 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
                     await toggleMenuItemFeatured(restaurantId, editingItemId, is_featured);
                 }
 
-                const currentImageUrl = current.images?.[0]?.url || '';
-                if (finalImageUrl !== currentImageUrl) {
-                    if (current.images?.length) {
-                        await removeMenuItemImage(restaurantId, editingItemId, 0);
+                const currentImageUrls = current.images?.map((img) => img.url) ?? [];
+                if (!areImageListsEqual(normalizedImageUrls, currentImageUrls)) {
+                    for (let index = current.images.length - 1; index >= 0; index -= 1) {
+                        await removeMenuItemImage(restaurantId, editingItemId, index);
                     }
-                    if (finalImageUrl) {
+
+                    for (const url of normalizedImageUrls) {
                         await addMenuItemImage(restaurantId, editingItemId, {
-                            url: finalImageUrl,
+                            url,
                             alt: formData.name.trim(),
                         });
                     }
@@ -148,11 +198,12 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
                     category_id: formData.category,
                     is_available,
                     is_featured,
+                    sort_order: normalizedSortOrder ? Number(normalizedSortOrder) : undefined,
                 });
 
-                if (finalImageUrl) {
+                for (const url of normalizedImageUrls) {
                     await addMenuItemImage(restaurantId, created._id, {
-                        url: finalImageUrl,
+                        url,
                         alt: formData.name.trim(),
                     });
                 }
@@ -175,10 +226,13 @@ export function useMenuForm(restaurantId: string, onSuccess: () => void) {
         setShowItemModal,
         isSubmitting,
         isEditing: Boolean(editingItemId),
+        isUploadingImage,
         formData,
-        imagePreviewUrl,
+        imagePreviewUrls: formData.imageUrls,
         handleFieldChange,
         handleImageFileChange,
+        handleAddImageUrl,
+        handleRemoveImageAt,
         handleSubmit,
         openAddItem,
         openEditItem,

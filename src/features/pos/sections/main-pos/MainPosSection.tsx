@@ -85,6 +85,24 @@ const MainPosSection: React.FC = () => {
     return [{ value: staff._id, label: staff.full_name }];
   }, [staff]);
 
+  const uiCategories = useMemo(
+    () => categories.map((category) => ({ id: category._id, name: category.name })),
+    [categories]
+  );
+
+  const uiMenuItems = useMemo(
+    () => menuItems.map((item) => ({
+      _id: item._id,
+      name: item.name,
+      price: item.base_price,
+      image: item.images?.[0]?.url,
+      description: item.description ?? undefined,
+      status: item.is_available ? 'available' as const : 'unavailable' as const,
+      stock_quantity: item.is_available ? 99 : 0,
+    })),
+    [menuItems]
+  );
+
   // Stubs for functionality not fully implemented
   const onSummaryChange = () => { };
   const onCreateOrder = () => { };
@@ -143,14 +161,14 @@ const MainPosSection: React.FC = () => {
                 />
 
                 <MenuCategory
-                  categories={[{ id: 'all', name: 'Tất cả', icon: 'LayoutGrid' }, ...categories]}
+                  categories={[{ id: 'all', name: 'Tất cả', icon: 'LayoutGrid' }, ...uiCategories]}
                   activeCategory={activeCategory}
                   onCategoryChange={setActiveCategory}
                 />
               </div>
 
               <div className="flex-1 overflow-y-auto p-4">
-                <MenuGrid menuItems={menuItems} onAddToCart={handleAddToCart} />
+                <MenuGrid menuItems={uiMenuItems} onAddToCart={handleAddToCart} />
               </div>
             </>
           )}

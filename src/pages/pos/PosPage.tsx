@@ -7,8 +7,6 @@ import { POS_BASE_PATH } from '@/routes/pos-route';
 import { PosProvider } from '@/features/pos/contexts/PosContext';
 import { usePosContext } from '@/features/pos/contexts/usePosContext';
 import RejectToPreviousPage from '@/components/navigation/RejectToPreviousPage';
-
-import type { POSSection } from '@/stores/pos-store';
 import {
   demoNotifications,
   getRelativeTime,
@@ -17,6 +15,8 @@ import PaymentSection from '@/features/pos/sections/payment/PaymentSection';
 import OrderSection from '@/features/pos/sections/order/OrderSection';
 import MenuSection from '@/features/pos/sections/menu/MenuSection';
 import StaffSection from '@/features/pos/sections/staff/StaffSection';
+
+type POSSection = 'main-pos' | 'table' | 'payment' | 'order' | 'menu' | 'staff';
 
 const ROUTE_TO_SECTION: Record<string, POSSection> = {
   '': 'main-pos',

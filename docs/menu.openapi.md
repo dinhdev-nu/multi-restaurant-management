@@ -138,7 +138,7 @@ Ket luan zero-omission:
 - Moi field khong xuat hien o response da duoc giai thich ro ly do: endpoint command tra payload toi gian, endpoint public co omit/pick co chu dich, hoac field la derived field khong thuoc schema.
 
 ---
-
+2.1. 2.2 2.3 2.4 2.5 2.6 2.7 2.8  2.11 2.12 1.13 2.14 2.15
 ## 2. API Specification
 
 ## 2.1 POST /restaurants/{id}/menu/categories

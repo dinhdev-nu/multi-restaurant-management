@@ -1,5 +1,6 @@
 import React from 'react';
 import Icon from '@/components/AppIcon';
+import Image from '@/components/AppImage';
 import Button from '../../../components/Button';
 import type { MenuCategoryWithCount } from '@/types/menu-type';
 import { Spinner } from '@/components/ui/spinner';
@@ -61,7 +62,17 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
                                     key={category._id}
                                     className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3"
                                 >
-                                    <div className="min-w-0 flex-1">
+                                    <div className="min-w-0 flex flex-1 items-center gap-3">
+                                        <div className="size-10 overflow-hidden rounded-md border border-border bg-muted">
+                                            {category.image_url ? (
+                                                <Image src={category.image_url} alt={category.name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <div className="flex h-full w-full items-center justify-center">
+                                                    <Icon name="Image" size={14} className="text-muted-foreground" />
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <div className="flex items-center gap-2">
                                             <p className="truncate text-sm font-medium text-foreground">{category.name}</p>
                                             <span

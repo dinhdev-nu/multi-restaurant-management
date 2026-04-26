@@ -12,8 +12,8 @@ import {
     deleteMenuItem,
     toMenuEndpointError,
 } from '@/services/menu';
+import { usePOSStore } from '@/stores/pos-store';
 import type { MenuItem, MenuCategoryWithCount, ListMenuItemsQuery } from '@/types/menu-type';
-import { MENU_SECTION_MOCK_CATEGORIES, MENU_SECTION_MOCK_ITEMS } from '../menu-mock';
 
 interface PaginationState {
     page: number;
@@ -32,9 +32,9 @@ const DEFAULT_PAGINATION: PaginationState = {
 type ItemAction = 'toggle-availability' | 'toggle-featured' | 'reorder-up' | 'reorder-down' | 'delete';
 type CategoryAction = 'toggle-active' | 'reorder-up' | 'reorder-down' | 'delete';
 
-const isMockId = (id: string) => id.startsWith('mock-');
-
 export function useMenuManagement(restaurantId: string) {
+    const setMenuCategories = usePOSStore((state) => state.setMenuCategories);
+    const setMenuItems = usePOSStore((state) => state.setMenuItems);
     const [isLoadingData, setIsLoadingData] = React.useState(true);
     
     // Categories and Items
@@ -48,7 +48,6 @@ export function useMenuManagement(restaurantId: string) {
     const [page, setPage] = React.useState(1);
     const [limit, setLimit] = React.useState(50);
     const [pagination, setPagination] = React.useState<PaginationState>(DEFAULT_PAGINATION);
-    const [usingMockData, setUsingMockData] = React.useState(false);
     const [pendingActions, setPendingActions] = React.useState<Record<string, boolean>>({});
 
     const getActionKey = React.useCallback((scope: 'item' | 'category', action: string, id: string) => {
@@ -73,29 +72,6 @@ export function useMenuManagement(restaurantId: string) {
         return Boolean(pendingActions[getActionKey('category', action, categoryId)]);
     }, [pendingActions, getActionKey]);
 
-    const applyMockData = React.useCallback(() => {
-        const allItems = MENU_SECTION_MOCK_ITEMS.filter((item) => {
-            const matchesCategory = filterCategory === 'all' || item.category_id === filterCategory;
-            const matchesAvailability = filterAvailability === 'all'
-                || (filterAvailability === 'available' ? item.is_available : !item.is_available);
-            const matchesFeatured = filterFeatured === 'all'
-                || (filterFeatured === 'featured' ? item.is_featured : !item.is_featured);
-            return matchesCategory && matchesAvailability && matchesFeatured;
-        });
-        const start = (page - 1) * limit;
-        const data = allItems.slice(start, start + limit);
-
-        setCategories(MENU_SECTION_MOCK_CATEGORIES);
-        setItems(data);
-        setPagination({
-            page,
-            limit,
-            total: allItems.length,
-            total_pages: Math.max(Math.ceil(allItems.length / limit), 1),
-        });
-        setUsingMockData(true);
-    }, [filterAvailability, filterCategory, filterFeatured, limit, page]);
-
     // Fetch lists
     const fetchMenuData = React.useCallback(async (silent = false) => {
         if (!silent) setIsLoadingData(true);
@@ -115,24 +91,23 @@ export function useMenuManagement(restaurantId: string) {
                 listMenuCategories(restaurantId, { include_inactive: true }),
                 listMenuItems(restaurantId, queryParams),
             ]);
-            const serverHasData = cats.data.length > 0 || itemsRes.data.length > 0;
-
-            if (serverHasData) {
-                setCategories(cats.data);
-                setItems(itemsRes.data);
-                setPagination(itemsRes.pagination || DEFAULT_PAGINATION);
-                setUsingMockData(false);
-            } else {
-                applyMockData();
-            }
+            setCategories(cats.data);
+            setItems(itemsRes.data);
+            setMenuCategories(cats.data);
+            setMenuItems(itemsRes.data);
+            setPagination(itemsRes.pagination || DEFAULT_PAGINATION);
 
         } catch (error) {
-            applyMockData();
-            toast.error(`${toMenuEndpointError('list', error).message}. Đang hiển thị dữ liệu mẫu để kiểm tra giao diện.`);
+            setCategories([]);
+            setItems([]);
+            setMenuCategories([]);
+            setMenuItems([]);
+            setPagination(DEFAULT_PAGINATION);
+            toast.error(toMenuEndpointError('list', error).message);
         } finally {
             if (!silent) setIsLoadingData(false);
         }
-    }, [restaurantId, page, limit, filterCategory, filterAvailability, filterFeatured, applyMockData]);
+    }, [restaurantId, page, limit, filterCategory, filterAvailability, filterFeatured, setMenuCategories, setMenuItems]);
 
     React.useEffect(() => {
         void fetchMenuData();
@@ -159,10 +134,6 @@ export function useMenuManagement(restaurantId: string) {
 
     // Actions
     const handleToggleAvailability = async (itemId: string, currentAvailable: boolean) => {
-        if (isMockId(itemId)) {
-            toast.info('Dữ liệu mẫu chỉ dùng để kiểm tra giao diện');
-            return false;
-        }
         if (isItemActionPending(itemId, 'toggle-availability')) return false;
 
         setActionPending('item', 'toggle-availability', itemId, true);
@@ -180,10 +151,6 @@ export function useMenuManagement(restaurantId: string) {
     };
 
     const handleDeleteItem = async (itemId: string) => {
-        if (isMockId(itemId)) {
-            toast.info('Dữ liệu mẫu chỉ dùng để kiểm tra giao diện');
-            return false;
-        }
         if (isItemActionPending(itemId, 'delete')) return false;
 
         setActionPending('item', 'delete', itemId, true);
@@ -201,10 +168,6 @@ export function useMenuManagement(restaurantId: string) {
     };
 
     const handleToggleFeatured = async (itemId: string, currentFeatured: boolean) => {
-        if (isMockId(itemId)) {
-            toast.info('Dữ liệu mẫu chỉ dùng để kiểm tra giao diện');
-            return false;
-        }
         if (isItemActionPending(itemId, 'toggle-featured')) return false;
 
         setActionPending('item', 'toggle-featured', itemId, true);
@@ -222,11 +185,6 @@ export function useMenuManagement(restaurantId: string) {
     };
 
     const handleReorderItem = async (itemId: string, direction: 'up' | 'down') => {
-        if (isMockId(itemId)) {
-            toast.info('Dữ liệu mẫu chỉ dùng để kiểm tra giao diện');
-            return false;
-        }
-
         const action: ItemAction = direction === 'up' ? 'reorder-up' : 'reorder-down';
         if (isItemActionPending(itemId, action)) return false;
 
@@ -261,11 +219,6 @@ export function useMenuManagement(restaurantId: string) {
     };
 
     const handleReorderCategory = async (categoryId: string, direction: 'up' | 'down') => {
-        if (isMockId(categoryId)) {
-            toast.info('Dữ liệu mẫu chỉ dùng để kiểm tra giao diện');
-            return false;
-        }
-
         const action: CategoryAction = direction === 'up' ? 'reorder-up' : 'reorder-down';
         if (isCategoryActionPending(categoryId, action)) return false;
 
@@ -293,10 +246,6 @@ export function useMenuManagement(restaurantId: string) {
     };
 
     const handleToggleCategoryActive = async (categoryId: string, isActive: boolean) => {
-        if (isMockId(categoryId)) {
-            toast.info('Dữ liệu mẫu chỉ dùng để kiểm tra giao diện');
-            return false;
-        }
         if (isCategoryActionPending(categoryId, 'toggle-active')) return false;
 
         setActionPending('category', 'toggle-active', categoryId, true);
@@ -314,10 +263,6 @@ export function useMenuManagement(restaurantId: string) {
     };
 
     const handleDeleteCategory = async (categoryId: string) => {
-        if (isMockId(categoryId)) {
-            toast.info('Dữ liệu mẫu chỉ dùng để kiểm tra giao diện');
-            return false;
-        }
         if (isCategoryActionPending(categoryId, 'delete')) return false;
 
         setActionPending('category', 'delete', categoryId, true);
@@ -338,10 +283,6 @@ export function useMenuManagement(restaurantId: string) {
     };
 
     const checkCategoryHasActiveItemsInCategory = async (categoryId: string): Promise<boolean> => {
-        if (isMockId(categoryId)) {
-            return items.some((item) => item.category_id === categoryId && item.is_available);
-        }
-
         try {
             const result = await listMenuItems(restaurantId, {
                 category_id: categoryId,
@@ -380,7 +321,6 @@ export function useMenuManagement(restaurantId: string) {
         setPage,
         limit,
         pagination,
-        usingMockData,
         filterCategory,
         filterAvailability,
         filterFeatured,

@@ -1,8 +1,11 @@
 import React from 'react';
 import Icon from '@/components/AppIcon';
+import Image from '@/components/AppImage';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
 import { Spinner } from '@/components/ui/spinner';
+import { uploadSingleFile } from '@/services/uploads';
+import { toast } from 'sonner';
 
 interface CategoryFormModalProps {
     isOpen: boolean;
@@ -11,11 +14,13 @@ interface CategoryFormModalProps {
     categoryName: string;
     categoryDescription: string;
     categoryImageUrl: string;
+    categorySortOrder: string;
     onClose: () => void;
     onSubmit: () => void;
     onCategoryNameChange: (value: string) => void;
     onCategoryDescriptionChange: (value: string) => void;
     onCategoryImageUrlChange: (value: string) => void;
+    onCategorySortOrderChange: (value: string) => void;
 }
 
 const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
@@ -25,12 +30,37 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
     categoryName,
     categoryDescription,
     categoryImageUrl,
+    categorySortOrder,
     onClose,
     onSubmit,
     onCategoryNameChange,
     onCategoryDescriptionChange,
     onCategoryImageUrlChange,
+    onCategorySortOrderChange,
 }) => {
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isUploadingImage, setIsUploadingImage] = React.useState(false);
+
+    const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploadingImage(true);
+        try {
+            const uploaded = await uploadSingleFile(file);
+            onCategoryImageUrlChange(uploaded.url);
+            toast.success('Tải ảnh danh mục thành công');
+        } catch (error) {
+            const err = error as Error;
+            toast.error(err.message || 'Không thể tải ảnh danh mục');
+        } finally {
+            setIsUploadingImage(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -46,7 +76,7 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
                             {isEditing ? 'Cập nhật danh mục' : 'Thêm danh mục mới'}
                         </h2>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={onClose} disabled={isSubmitting} className="hover-scale">
+                    <Button variant="ghost" size="icon" onClick={onClose} disabled={isSubmitting || isUploadingImage} className="hover-scale">
                         <Icon name="X" size={20} />
                     </Button>
                 </div>
@@ -67,8 +97,79 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
                         onChange={(e) => onCategoryDescriptionChange(e.target.value)}
                         placeholder="Mô tả danh mục"
                     />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                        <Input
+                            label="Thứ tự hiển thị"
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={categorySortOrder}
+                            onChange={(e) => onCategorySortOrderChange(e.target.value)}
+                            placeholder="Ví dụ: 0"
+                            disabled={isEditing}
+                        />
+                        {isEditing && (
+                            <p className="text-xs text-muted-foreground md:col-span-2">
+                                API cập nhật danh mục không nhận trường thứ tự hiển thị. Dùng chức năng sắp xếp danh mục để thay đổi thứ tự.
+                            </p>
+                        )}
+
+                        <div className="space-y-3">
+                            <p className="text-sm font-medium text-foreground">Ảnh danh mục</p>
+
+                            <div className="flex items-center gap-4">
+                                <div className="size-20 overflow-hidden rounded-lg border border-border bg-muted">
+                                    {categoryImageUrl ? (
+                                        <Image src={categoryImageUrl} alt="Category preview" className="h-full w-full object-cover" />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center">
+                                            <Icon name="Image" size={20} className="text-muted-foreground" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        className="hidden"
+                                        onChange={handleUploadImage}
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isSubmitting || isUploadingImage}
+                                        iconName={isUploadingImage ? undefined : 'Upload'}
+                                        iconPosition="left"
+                                    >
+                                        {isUploadingImage ? (
+                                            <span className="inline-flex items-center gap-2">
+                                                <Spinner className="size-4" />
+                                                Đang tải ảnh...
+                                            </span>
+                                        ) : 'Tải ảnh từ máy'}
+                                    </Button>
+
+                                    {categoryImageUrl && (
+                                        <Button
+                                            variant="ghost"
+                                            type="button"
+                                            onClick={() => onCategoryImageUrlChange('')}
+                                            disabled={isSubmitting || isUploadingImage}
+                                            className="justify-start px-0 text-muted-foreground"
+                                        >
+                                            Xóa ảnh
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <Input
-                        label="Ảnh danh mục (URL)"
+                        label="Hoặc nhập URL ảnh"
                         type="url"
                         value={categoryImageUrl}
                         onChange={(e) => onCategoryImageUrlChange(e.target.value)}
@@ -77,13 +178,13 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
                 </div>
 
                 <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
-                    <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+                    <Button variant="outline" onClick={onClose} disabled={isSubmitting || isUploadingImage}>
                         Hủy
                     </Button>
                     <Button
                         variant="default"
                         onClick={onSubmit}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploadingImage}
                         iconName={isSubmitting ? undefined : isEditing ? 'Save' : 'Plus'}
                         iconPosition="left"
                     >

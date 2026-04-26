@@ -14,14 +14,16 @@ import MenuStats from './components/MenuStats';
 import CategoryManagerModal from './components/CategoryManagerModal';
 import CategoryFormModal from './components/CategoryFormModal';
 
-// Import hooks and mocks
+// Import hooks
 import { useMenuManagement } from './hooks/useMenuManagement';
 import { useMenuForm } from './hooks/useMenuForm';
 import { useCategoryForm } from './hooks/useCategoryForm';
-import { demoRestaurant } from '@/features/pos/pos-mock';
+import { useRequiredPosData } from '@/features/pos/contexts/usePosContext';
 
 const MenuSection: React.FC = () => {
-    const restaurantId = demoRestaurant.id;
+    const posData = useRequiredPosData();
+    const restaurantId = posData.restaurant._id;
+    console.log('MenuSection rendered with restaurantId:', restaurantId);
     const [viewMode, setViewMode] = React.useState<'table' | 'grid'>('table');
     const isTableView = viewMode === 'table';
 
@@ -42,7 +44,6 @@ const MenuSection: React.FC = () => {
         page,
         setPage,
         pagination,
-        usingMockData,
         filterCategory,
         filterAvailability,
         filterFeatured,
@@ -69,11 +70,14 @@ const MenuSection: React.FC = () => {
         showItemModal,
         setShowItemModal,
         isSubmitting: isSubmittingMenu,
+        isUploadingImage: isUploadingMenuImage,
         isEditing: isEditingMenuItem,
         formData: itemFormData,
-        imagePreviewUrl,
+        imagePreviewUrls,
         handleFieldChange,
         handleImageFileChange,
+        handleAddImageUrl,
+        handleRemoveImageAt,
         handleSubmit: handleSubmitMenu,
         openAddItem,
         openEditItem,
@@ -93,6 +97,8 @@ const MenuSection: React.FC = () => {
         setCategoryDescription,
         categoryImageUrl,
         setCategoryImageUrl,
+        categorySortOrder,
+        setCategorySortOrder,
         handleSubmitCategory,
         resetForm: resetCategoryForm,
     } = useCategoryForm(restaurantId, refetch);
@@ -101,6 +107,7 @@ const MenuSection: React.FC = () => {
     const uiCategories = React.useMemo(() => categories.map((cat) => ({
         id: cat._id,
         name: cat.name,
+        imageUrl: cat.image_url,
     })), [categories]);
 
     const uiItemCounts = React.useMemo(() => categories.reduce((acc, cat) => {
@@ -192,7 +199,7 @@ const MenuSection: React.FC = () => {
                     {/* Filters and Sorts */}
                     <div className="bg-card border border-border rounded-lg p-6 mb-6">
                         <div className="flex flex-col gap-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                                 <Select
                                     placeholder="Lọc trạng thái bán"
                                     options={[
@@ -224,9 +231,7 @@ const MenuSection: React.FC = () => {
                                     value={filterCategory}
                                     onChange={(e) => handleCategoryChange(e.target.value)}
                                 />
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg">
                                 <Select
                                     placeholder="Số món mỗi trang"
                                     options={[
@@ -262,11 +267,6 @@ const MenuSection: React.FC = () => {
                         </p>
 
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            {usingMockData && (
-                                <span className="inline-flex items-center rounded-full bg-warning/10 px-2 py-1 text-xs text-warning">
-                                    Đang hiển thị mock-data (2 category, 2 món)
-                                </span>
-                            )}
                             {items.length > 0 && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Icon name="Filter" size={16} />
@@ -341,13 +341,15 @@ const MenuSection: React.FC = () => {
                     {/* Item Modal */}
                     <MenuItemModal
                         isOpen={showItemModal}
-                        isLoading={isSubmittingMenu}
+                        isLoading={isSubmittingMenu || isUploadingMenuImage}
                         isEditing={isEditingMenuItem}
                         onClose={() => { setShowItemModal(false); resetMenuForm(); }}
                         onSave={handleSubmitMenu}
                         onFieldChange={handleFieldChange}
                         onImageFileChange={handleImageFileChange}
-                        imagePreviewUrl={imagePreviewUrl}
+                        onAddImageUrl={handleAddImageUrl}
+                        onRemoveImageAt={handleRemoveImageAt}
+                        imagePreviewUrls={imagePreviewUrls}
                         item={itemFormData}
                         categories={uiCategories}
                     />
@@ -447,6 +449,7 @@ const MenuSection: React.FC = () => {
                         categoryName={categoryName}
                         categoryDescription={categoryDescription}
                         categoryImageUrl={categoryImageUrl}
+                        categorySortOrder={categorySortOrder}
                         onClose={() => {
                             setShowCategoryModal(false);
                             resetCategoryForm();
@@ -455,6 +458,7 @@ const MenuSection: React.FC = () => {
                         onCategoryNameChange={setCategoryName}
                         onCategoryDescriptionChange={setCategoryDescription}
                         onCategoryImageUrlChange={setCategoryImageUrl}
+                        onCategorySortOrderChange={setCategorySortOrder}
                     />
                 </div>
             )}

@@ -15,12 +15,14 @@ export function useCategoryForm(restaurantId: string, onSuccess: () => void) {
     const [categoryName, setCategoryName] = React.useState('');
     const [categoryDescription, setCategoryDescription] = React.useState('');
     const [categoryImageUrl, setCategoryImageUrl] = React.useState('');
+    const [categorySortOrder, setCategorySortOrder] = React.useState('');
 
     const resetForm = () => {
         setEditingCategoryId(null);
         setCategoryName('');
         setCategoryDescription('');
         setCategoryImageUrl('');
+        setCategorySortOrder('');
     };
 
     const openAddCategory = () => {
@@ -33,6 +35,7 @@ export function useCategoryForm(restaurantId: string, onSuccess: () => void) {
         setCategoryName(category.name);
         setCategoryDescription(category.description || '');
         setCategoryImageUrl(category.image_url || '');
+        setCategorySortOrder(String(category.sort_order));
         setShowCategoryModal(true);
     };
 
@@ -40,6 +43,15 @@ export function useCategoryForm(restaurantId: string, onSuccess: () => void) {
         if (!categoryName.trim()) {
             toast.error('Vui lòng nhập tên danh mục');
             return;
+        }
+
+        const normalizedSortOrder = categorySortOrder.trim();
+        if (normalizedSortOrder) {
+            const parsed = Number(normalizedSortOrder);
+            if (!Number.isInteger(parsed) || parsed < 0) {
+                toast.error('Sort order phải là số nguyên >= 0');
+                return;
+            }
         }
 
         setIsSubmitting(true);
@@ -56,6 +68,7 @@ export function useCategoryForm(restaurantId: string, onSuccess: () => void) {
                     name: categoryName.trim(),
                     description: categoryDescription.trim() || undefined,
                     image_url: categoryImageUrl.trim() || undefined,
+                    sort_order: normalizedSortOrder ? Number(normalizedSortOrder) : undefined,
                 });
                 toast.success('Thêm danh mục thành công');
             }
@@ -83,6 +96,8 @@ export function useCategoryForm(restaurantId: string, onSuccess: () => void) {
         setCategoryDescription,
         categoryImageUrl,
         setCategoryImageUrl,
+        categorySortOrder,
+        setCategorySortOrder,
         handleSubmitCategory,
         resetForm,
     };

@@ -1,10 +1,12 @@
 import React from 'react';
 import Button from '../../../components/Button';
 import { cn } from '@/lib/utils';
+import Image from '@/components/AppImage';
 
 interface Category {
   id: string;
   name: string;
+  imageUrl?: string | null;
 }
 
 interface CategoryFilterProps {
@@ -61,6 +63,11 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
             onClick={() => onCategoryChange(category.id)}
             className="flex-shrink-0"
           >
+            {category.imageUrl && (
+              <span className="mr-2 size-5 overflow-hidden rounded-full border border-border">
+                <Image src={category.imageUrl} alt={category.name} className="h-full w-full object-cover" />
+              </span>
+            )}
             <span>{category.name}</span>
             {count > 0 && (
               <span className={getBadgeClass(isSelected)}>

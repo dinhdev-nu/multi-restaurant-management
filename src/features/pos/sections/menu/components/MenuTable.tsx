@@ -32,7 +32,7 @@ const StatusBadge: React.FC<{ isAvailable: boolean }> = ({ isAvailable }) => {
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium bg-warning/10 text-warning border-warning/20">
-      <Icon name="EyeOff" size={12} />
+      <Icon name="XCircle" size={12} />
       <span>Tạm ngưng</span>
     </span>
   );
@@ -163,7 +163,7 @@ const MenuTable: React.FC<MenuTableProps> = ({
                         disabled={isAnyPending}
                         title={item.is_available ? 'Tạm ngưng' : 'Kích hoạt'}
                       >
-                        {isToggleAvailabilityPending ? <Spinner className="size-4" /> : <Icon name={item.is_available ? 'EyeOff' : 'Eye'} size={14} />}
+                        {isToggleAvailabilityPending ? <Spinner className="size-4" /> : <Icon name={item.is_available ? 'XCircle' : 'CheckCircle'} size={14} />}
                       </Button>
 
                       <Button

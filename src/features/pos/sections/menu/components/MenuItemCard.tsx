@@ -117,7 +117,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-1 text-warning">
-                <Icon name="EyeOff" size={12} />
+                <Icon name="XCircle" size={12} />
                 <span className="text-xs">Tạm ngưng</span>
               </div>
             )}
@@ -134,7 +134,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             size="sm"
             fullWidth
             onClick={() => onToggleAvailability(item._id, item.is_available)}
-            iconName={item.is_available ? 'EyeOff' : 'Eye'}
+            iconName={item.is_available ? 'XCircle' : 'CheckCircle'}
             iconPosition="left"
             disabled={isAnyPending}
           >
