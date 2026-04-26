@@ -3,6 +3,7 @@ import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
 import { toast } from 'sonner';
 import { uploadSingleFile } from '@/services/uploads';
+import type { StaffPermissions, StaffPosition, StaffStatus } from '@/types/staff-type';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
 import Select from '../../../components/Select';
@@ -10,27 +11,17 @@ import Select from '../../../components/Select';
 export type StaffFormMode = 'add' | 'edit';
 export type StaffSubmitSection = 'all' | 'info' | 'account' | 'status' | 'avatar' | 'permissions';
 
-export interface StaffPermissionsData {
-  can_discount: boolean;
-  can_cancel_order: boolean;
-  can_process_payment: boolean;
-  can_refund: boolean;
-  can_view_reports: boolean;
-  can_manage_tables: boolean;
-  can_manage_menu: boolean;
-}
-
 export interface StaffFormData {
-  userId: string;
-  employeeCode: string;
-  name: string;
+  user_id: string;
+  employee_code: string;
+  full_name: string;
   phone: string;
   email: string;
-  role: string;
-  status: string;
-  startDate: string;
-  avatar: string;
-  permissions: StaffPermissionsData;
+  position: StaffPosition | '';
+  status: StaffStatus;
+  hire_date: string;
+  avatar_url: string;
+  permissions: StaffPermissions;
 }
 
 const PERMISSIONS_CONFIG = [
@@ -47,28 +38,28 @@ interface StaffFormModalProps {
   isOpen: boolean;
   mode?: StaffFormMode;
   formData: StaffFormData;
-  errors?: Partial<Record<keyof StaffFormData | 'avatar', string>>;
+  errors?: Partial<Record<keyof StaffFormData, string>>;
   isLoading?: boolean;
   onClose: () => void;
-  onFieldChange: (field: keyof StaffFormData, value: string | boolean | StaffPermissionsData) => void;
+  onFieldChange: (field: keyof StaffFormData, value: string | StaffPermissions) => void;
   onSubmit: (section?: StaffSubmitSection, payload?: { avatarUrl?: string }) => void;
 }
 
 // ── Static options ────────────────────────────────────────────────────────────
 
 const ROLE_OPTIONS = [
-  { value: 'manager', label: 'Quản lý' },
-  { value: 'cashier', label: 'Thu ngân' },
-  { value: 'kitchen', label: 'Nhân viên bếp' },
-  { value: 'waiter', label: 'Phục vụ' },
-  { value: 'delivery', label: 'Giao hàng' },
+  { value: 'manager' as StaffPosition, label: 'Quản lý' },
+  { value: 'cashier' as StaffPosition, label: 'Thu ngân' },
+  { value: 'kitchen' as StaffPosition, label: 'Nhân viên bếp' },
+  { value: 'waiter' as StaffPosition, label: 'Phục vụ' },
+  { value: 'delivery' as StaffPosition, label: 'Giao hàng' },
 ];
 
 const STATUS_OPTIONS = [
-  { value: 'active', label: 'Đang làm việc' },
-  { value: 'inactive', label: 'Không hoạt động' },
-  { value: 'on_leave', label: 'Đang nghỉ' },
-  { value: 'terminated', label: 'Đã nghỉ việc' },
+  { value: 'active' as StaffStatus, label: 'Đang làm việc' },
+  { value: 'inactive' as StaffStatus, label: 'Không hoạt động' },
+  { value: 'on_leave' as StaffStatus, label: 'Đang nghỉ' },
+  { value: 'terminated' as StaffStatus, label: 'Đã nghỉ việc' },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -85,7 +76,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = React.useState(false);
-  const imagePreview = formData.avatar ?? '';
+  const imagePreview = formData.avatar_url ?? '';
 
   if (!isOpen) return null;
 
@@ -113,7 +104,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
   };
 
   const handleRemoveImage = () => {
-    onFieldChange('avatar', '');
+    onFieldChange('avatar_url', '');
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,7 +114,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
     setIsUploading(true);
     try {
       const uploadedInfo = await uploadSingleFile(file);
-      onFieldChange('avatar', uploadedInfo.url);
+      onFieldChange('avatar_url', uploadedInfo.url);
 
       if (isEditMode) {
         onSubmit('avatar', { avatarUrl: uploadedInfo.url });
@@ -141,7 +132,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
     }
   };
 
-  const togglePermission = (key: keyof StaffPermissionsData) => {
+  const togglePermission = (key: keyof StaffPermissions) => {
     onFieldChange('permissions', {
       ...formData.permissions,
       [key]: !formData.permissions[key],
@@ -188,9 +179,9 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 label="Mã nhân viên"
                 type="text"
                 placeholder="VD: NV001"
-                value={formData.employeeCode}
-                onChange={(e) => onFieldChange('employeeCode', e.target.value)}
-                error={errors.employeeCode}
+                value={formData.employee_code}
+                onChange={(e) => onFieldChange('employee_code', e.target.value)}
+                error={errors.employee_code}
                 required
                 disabled={isEditMode}
               />
@@ -198,26 +189,26 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 label="Họ và tên"
                 type="text"
                 placeholder="Nhập họ tên đầy đủ"
-                value={formData.name}
-                onChange={(e) => onFieldChange('name', e.target.value)}
-                error={errors.name}
+                value={formData.full_name}
+                onChange={(e) => onFieldChange('full_name', e.target.value)}
+                error={errors.full_name}
                 required
               />
               <Select
                 label="Vai trò"
                 placeholder="Chọn vai trò"
                 options={ROLE_OPTIONS}
-                value={formData.role}
-                onChange={(event) => onFieldChange('role', event.target.value)}
-                error={errors.role}
+                value={formData.position}
+                onChange={(event) => onFieldChange('position', event.target.value)}
+                error={errors.position}
                 required
               />
               <Input
                 label="Ngày bắt đầu"
                 type="date"
-                value={formData.startDate}
-                onChange={(e) => onFieldChange('startDate', e.target.value)}
-                error={errors.startDate}
+                value={formData.hire_date}
+                onChange={(e) => onFieldChange('hire_date', e.target.value)}
+                error={errors.hire_date}
                 required={!isEditMode}
               />
               <Input
@@ -256,9 +247,9 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
               label="User ID liên kết"
               type="text"
               placeholder="Nhập user_id"
-              value={formData.userId}
-              onChange={(e) => onFieldChange('userId', e.target.value)}
-              error={errors.userId}
+              value={formData.user_id}
+              onChange={(e) => onFieldChange('user_id', e.target.value)}
+              error={errors.user_id}
               required
             />
           </div>
@@ -341,7 +332,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 <p className="text-xs text-muted-foreground mt-2">
                   Hỗ trợ định dạng JPG, PNG, WEBP.
                 </p>
-                {errors.avatar && <p className="text-xs text-error mt-1">{errors.avatar}</p>}
+                {errors.avatar_url && <p className="text-xs text-error mt-1">{errors.avatar_url}</p>}
               </div>
             </div>
           </div>
@@ -361,7 +352,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-muted/20 rounded-lg p-4">
               {PERMISSIONS_CONFIG.map((perm) => {
-                const isChecked = !!formData.permissions?.[perm.key as keyof StaffPermissionsData];
+                const isChecked = !!formData.permissions?.[perm.key as keyof StaffPermissions];
                 return (
                   <label key={perm.key} className="flex items-center gap-3 cursor-pointer group">
                     <div className={`flex size-5 items-center justify-center rounded border transition-colors ${isChecked ? 'bg-primary border-primary' : 'border-input bg-background group-hover:border-primary/50'}`}>
@@ -374,7 +365,7 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                       type="checkbox"
                       className="hidden"
                       checked={isChecked}
-                      onChange={() => togglePermission(perm.key as keyof StaffPermissionsData)}
+                      onChange={() => togglePermission(perm.key as keyof StaffPermissions)}
                     />
                   </label>
                 );

@@ -3,8 +3,7 @@ import Icon from '@/components/AppIcon';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 import { Spinner } from '@/components/ui/spinner';
 import { useRequiredPosData } from '@/features/pos/contexts/usePosContext';
-import type { StaffDetail, StaffPosition } from '@/types/staff-type';
-import type { Staff } from './components/StaffCard';
+import type { StaffDetail, StaffSummary } from '@/types/staff-type';
 import Button from '../../components/Button';
 import StaffCard from './components/StaffCard';
 import StaffTable from './components/StaffTable';
@@ -13,7 +12,7 @@ import StaffDetailsModal from './components/StaffDetailsModal';
 import StaffStatsCards from './components/StaffStatsCards';
 import StaffFilters from './components/StaffFilters';
 import StaffHeader from './components/StaffHeader';
-import { useStaffManagement, mapDetailToCard } from './hooks/useStaffManagement';
+import { useStaffManagement, mapDetailToSummary } from './hooks/useStaffManagement';
 import { useStaffForm } from './hooks/useStaffForm';
 import { getRestaurantStaffDetail, toStaffEndpointError } from '@/services/staff';
 import { toast } from 'sonner';
@@ -25,7 +24,7 @@ const StaffSection: React.FC = () => {
     const [showDetailsModal, setShowDetailsModal] = React.useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
     const [selectedStaffDetail, setSelectedStaffDetail] = React.useState<StaffDetail | null>(null);
-    const [staffToDelete, setStaffToDelete] = React.useState<Staff | null>(null);
+    const [staffToDelete, setStaffToDelete] = React.useState<StaffSummary | null>(null);
 
     const {
         staffData,
@@ -60,45 +59,45 @@ const StaffSection: React.FC = () => {
         setShowDetailsModal(true);
     }, []);
 
-    const handleViewDetails = React.useCallback(async (staff: Staff) => {
+    const handleViewDetails = React.useCallback(async (staff: StaffSummary) => {
         const fallbackDetail: StaffDetail = {
-            _id: staff._id,
-            restaurant_id: staff.restaurantId || restaurantId,
-            user_id: staff.userId || '',
-            employee_code: staff.employeeId || '',
-            full_name: staff.name,
-            phone: staff.phone,
-            email: staff.email,
-            position: staff.role as StaffPosition,
-            hire_date: staff.joinDate || '',
-            avatar_url: staff.avatar || '',
+            _id: staff.id,
+            restaurant_id: restaurantId,
+            user_id: staff.user_id,
+            employee_code: staff.employee_code,
+            full_name: staff.full_name,
+            phone: staff.phone ?? null,
+            email: staff.email ?? null,
+            position: staff.position,
+            hire_date: staff.hire_date,
+            avatar_url: staff.avatar_url,
             status: staff.status,
             permissions: undefined,
             deleted_at: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            created_at: staff.created_at,
+            updated_at: staff.created_at,
         };
 
         showStaffDetails(fallbackDetail);
 
         try {
-            const detail = await getRestaurantStaffDetail(restaurantId, staff._id);
+            const detail = await getRestaurantStaffDetail(restaurantId, staff.id);
             showStaffDetails(detail);
         } catch (error) {
             toast.error(toStaffEndpointError('detail', error).message);
         }
     }, [restaurantId, showStaffDetails]);
 
-    const handleEditStaff = React.useCallback((staff: Staff) => {
+    const handleEditStaff = React.useCallback((staff: StaffSummary) => {
         void openEditModal(staff, setSelectedStaffDetail);
     }, [openEditModal]);
 
-    const handleEditStaffFromDetails = React.useCallback((staff: Staff, detail?: StaffDetail | null) => {
+    const handleEditStaffFromDetails = React.useCallback((staff: StaffSummary, detail?: StaffDetail | null) => {
         setShowDetailsModal(false);
         void openEditModal(staff, setSelectedStaffDetail, detail ?? selectedStaffDetail);
     }, [openEditModal, selectedStaffDetail]);
 
-    const handleDeleteRequest = React.useCallback((staff: Staff) => {
+    const handleDeleteRequest = React.useCallback((staff: StaffSummary) => {
         setStaffToDelete(staff);
         setShowDeleteConfirm(true);
     }, []);
@@ -106,7 +105,7 @@ const StaffSection: React.FC = () => {
     const handleDeleteConfirm = React.useCallback(async () => {
         if (!staffToDelete) return;
         try {
-            await deleteStaff(staffToDelete._id);
+            await deleteStaff(staffToDelete.id);
         } finally {
             setShowDeleteConfirm(false);
             setStaffToDelete(null);
@@ -114,7 +113,7 @@ const StaffSection: React.FC = () => {
     }, [deleteStaff, staffToDelete]);
 
     const selectedStaffCard = React.useMemo(() => (
-        selectedStaffDetail ? mapDetailToCard(selectedStaffDetail) : null
+        selectedStaffDetail ? mapDetailToSummary(selectedStaffDetail) : null
     ), [selectedStaffDetail]);
 
     return (
@@ -144,7 +143,7 @@ const StaffSection: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                             {staffData.map((staff) => (
                                 <StaffCard
-                                    key={staff._id}
+                                    key={staff.id}
                                     staff={staff}
                                     onEdit={handleEditStaff}
                                     onToggleStatus={toggleStatus}
@@ -241,7 +240,7 @@ const StaffSection: React.FC = () => {
                 }}
                 onConfirm={handleDeleteConfirm}
                 title="Xóa nhân viên"
-                message={`Bạn có chắc chắn muốn xóa nhân viên "${staffToDelete?.name ?? ''}"? Hành động này không thể hoàn tác.`}
+                message={`Bạn có chắc chắn muốn xóa nhân viên "${staffToDelete?.full_name ?? ''}"? Hành động này không thể hoàn tác.`}
                 confirmText="Xóa"
                 cancelText="Hủy"
                 variant="danger"

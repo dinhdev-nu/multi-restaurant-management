@@ -1,35 +1,36 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
 import { cn } from '@/lib/utils';
 import Button from '../../../components/Button';
-import type { Staff } from './StaffCard';
+import type { StaffStatus } from '@/types/staff-type';
+import type { StaffListItem } from './StaffCard';
 
 interface StaffTableProps {
-  staff: Staff[];
-  onEdit: (staff: Staff) => void;
-  onToggleStatus: (staff: Staff) => void;
-  onViewDetails: (staff: Staff) => void;
-  onDelete: (staff: Staff) => void;
+  staff: StaffListItem[];
+  onEdit: (staff: StaffListItem) => void;
+  onToggleStatus: (staff: StaffListItem) => void;
+  onViewDetails: (staff: StaffListItem) => void;
+  onDelete: (staff: StaffListItem) => void;
 }
 
 // ── Style maps ────────────────────────────────────────────────────────────────
 
-const STATUS_COLOR: Record<Staff['status'], string> = {
+const STATUS_COLOR: Record<StaffStatus, string> = {
   'active': 'text-success',
   'inactive': 'text-muted-foreground',
   'on_leave': 'text-warning',
   'terminated': 'text-error',
 };
 
-const STATUS_BG: Record<Staff['status'], string> = {
+const STATUS_BG: Record<StaffStatus, string> = {
   'active': 'bg-success/10',
   'inactive': 'bg-muted',
   'on_leave': 'bg-warning/10',
   'terminated': 'bg-error/10',
 };
 
-const STATUS_DOT: Record<Staff['status'], string> = {
+const STATUS_DOT: Record<StaffStatus, string> = {
   'active': 'bg-success',
   'inactive': 'bg-muted-foreground',
   'on_leave': 'bg-warning',
@@ -39,8 +40,24 @@ const STATUS_DOT: Record<Staff['status'], string> = {
 const ROLE_COLOR: Record<string, string> = {
   manager: 'bg-accent text-accent-foreground',
   cashier: 'bg-secondary text-secondary-foreground',
+  waiter: 'bg-warning text-warning-foreground',
   kitchen: 'bg-success text-success-foreground',
   delivery: 'bg-primary text-primary-foreground',
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  manager: 'Quản lý',
+  cashier: 'Thu ngân',
+  waiter: 'Phục vụ',
+  kitchen: 'Nhân viên bếp',
+  delivery: 'Giao hàng',
+};
+
+const STATUS_LABEL: Record<StaffStatus, string> = {
+  active: 'Đang làm việc',
+  inactive: 'Không hoạt động',
+  on_leave: 'Đang nghỉ',
+  terminated: 'Đã nghỉ việc',
 };
 
 const getRoleColor = (role: string): string =>
@@ -78,7 +95,7 @@ const StaffTable = memo<StaffTableProps>(({
           {staff.map((member, index) => {
             return (
               <tr
-                key={member._id}
+                key={member.id}
                 className={cn(
                   'border-b border-border transition-colors duration-200 hover:bg-muted/20',
                   index % 2 === 0 ? 'bg-background' : 'bg-muted/5'
@@ -88,26 +105,26 @@ const StaffTable = memo<StaffTableProps>(({
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <div className="size-10 rounded-full overflow-hidden bg-muted">
-                        <Image src={member.avatar ?? ''} alt={member.name} className="w-full h-full object-cover" />
+                        <Image src={member.avatar_url ?? ''} alt={member.full_name} className="w-full h-full object-cover" />
                       </div>
                       <div className={cn('absolute -bottom-0.5 -right-0.5 size-3 rounded-full border border-card', STATUS_DOT[member.status])} />
                     </div>
                     <div>
-                      <p className="font-medium text-card-foreground">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{member.employeeId}</p>
+                      <p className="font-medium text-card-foreground">{member.full_name}</p>
+                      <p className="text-sm text-muted-foreground">{member.employee_code}</p>
                     </div>
                   </div>
                 </td>
 
                 <td className="p-4">
-                  <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(member.role))}>
-                    {member.roleDisplay}
+                  <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(member.position))}>
+                    {ROLE_LABEL[member.position] ?? member.position}
                   </span>
                 </td>
 
                 <td className="p-4">
                   <span className={cn('rounded-full px-2 py-1 text-xs font-medium', STATUS_BG[member.status], STATUS_COLOR[member.status])}>
-                    {member.statusDisplay}
+                    {STATUS_LABEL[member.status] ?? member.status}
                   </span>
                 </td>
 
@@ -115,11 +132,11 @@ const StaffTable = memo<StaffTableProps>(({
                   <div className="space-y-1">
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Icon name="Phone" size={12} />
-                      <span>{member.phone}</span>
+                      <span>{member.phone ?? '---'}</span>
                     </div>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Icon name="Mail" size={12} />
-                      <span className="truncate max-w-32">{member.email}</span>
+                      <span className="truncate max-w-32">{member.email ?? '---'}</span>
                     </div>
                   </div>
                 </td>
@@ -127,7 +144,7 @@ const StaffTable = memo<StaffTableProps>(({
                 <td className="p-4">
                   <div className="text-sm">
                     <p className="text-card-foreground font-medium">
-                      {member.joinDate ? new Date(member.joinDate).toLocaleDateString('vi-VN') : '---'}
+                      {member.hire_date ? new Date(member.hire_date).toLocaleDateString('vi-VN') : '---'}
                     </p>
                   </div>
                 </td>

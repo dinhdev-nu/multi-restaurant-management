@@ -2,7 +2,7 @@ import { useState, useCallback, memo, type ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import PosHeader, { type HeaderProps } from './PosHeader';
 import PosSidebar, { type SidebarProps } from './PosSidebar';
-import { usePosContext, useRequiredPosData } from '@/features/pos/contexts/usePosContext';
+import { useRequiredPosData } from '@/features/pos/contexts/usePosContext';
 import './pos.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

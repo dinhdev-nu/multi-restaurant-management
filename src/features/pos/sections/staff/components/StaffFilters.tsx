@@ -2,13 +2,14 @@ import React from 'react';
 import Icon from '../../../components/AppIcon';
 import Select from '../../../components/Select';
 import Button from '../../../components/Button';
+import type { StaffPosition, StaffStatus } from '@/types/staff-type';
 
 interface StaffFiltersProps {
-    filterRole: string;
-    filterStatus: string;
+    filterRole: StaffPosition | '';
+    filterStatus: StaffStatus | '';
     viewMode: 'cards' | 'table';
-    onRoleChange: (role: string) => void;
-    onStatusChange: (status: string) => void;
+    onRoleChange: (role: StaffPosition | '') => void;
+    onStatusChange: (status: StaffStatus | '') => void;
     onViewModeChange: (mode: 'cards' | 'table') => void;
 }
 
@@ -46,7 +47,7 @@ const StaffFilters: React.FC<StaffFiltersProps> = ({
                         placeholder="Vai trò"
                         options={roleOptions}
                         value={filterRole}
-                        onChange={(e) => onRoleChange(e.target.value)}
+                        onChange={(e) => onRoleChange(e.target.value as StaffPosition | '')}
                         className="w-full sm:w-40"
                     />
 
@@ -54,7 +55,7 @@ const StaffFilters: React.FC<StaffFiltersProps> = ({
                         placeholder="Trạng thái"
                         options={statusOptions}
                         value={filterStatus}
-                        onChange={(e) => onStatusChange(e.target.value)}
+                        onChange={(e) => onStatusChange(e.target.value as StaffStatus | '')}
                         className="w-full sm:w-40"
                     />
                 </div>

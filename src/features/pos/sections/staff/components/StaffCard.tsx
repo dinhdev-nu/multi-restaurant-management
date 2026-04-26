@@ -2,33 +2,32 @@ import { memo } from 'react';
 import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
 import { cn } from '@/lib/utils';
+import type { StaffSummary, StaffPosition, StaffStatus } from '@/types/staff-type';
 import Button from '../../../components/Button';
 
-type StaffStatus = 'active' | 'inactive' | 'on_leave' | 'terminated';
-type StaffRole = 'manager' | 'cashier' | 'waiter' | 'kitchen' | 'delivery';
+export type StaffListItem = StaffSummary;
 
-export interface Staff {
-  _id: string;
-  restaurantId?: string;
-  userId?: string;
-  name: string;
-  avatar?: string;
-  employeeId?: string;
-  phone: string;
-  email: string;
-  joinDate?: string;
-  role: StaffRole;
-  roleDisplay: string;
-  status: StaffStatus;
-  statusDisplay: string;
-}
+const ROLE_LABEL: Record<StaffPosition, string> = {
+  manager: 'Quản lý',
+  cashier: 'Thu ngân',
+  waiter: 'Phục vụ',
+  kitchen: 'Nhân viên bếp',
+  delivery: 'Giao hàng',
+};
+
+const STATUS_LABEL: Record<StaffStatus, string> = {
+  active: 'Đang làm việc',
+  inactive: 'Không hoạt động',
+  on_leave: 'Đang nghỉ',
+  terminated: 'Đã nghỉ việc',
+};
 
 interface StaffCardProps {
-  staff: Staff;
-  onEdit: (staff: Staff) => void;
-  onToggleStatus: (staff: Staff) => void;
-  onViewDetails: (staff: Staff) => void;
-  onDelete: (staff: Staff) => void;
+  staff: StaffListItem;
+  onEdit: (staff: StaffListItem) => void;
+  onToggleStatus: (staff: StaffListItem) => void;
+  onViewDetails: (staff: StaffListItem) => void;
+  onDelete: (staff: StaffListItem) => void;
 }
 
 // ── Style maps ────────────────────────────────────────────────────────────────
@@ -79,19 +78,19 @@ const StaffCard = memo<StaffCardProps>(({
       <div className="flex items-center gap-4">
         <div className="relative">
           <div className="size-16 rounded-full overflow-hidden bg-muted">
-            <Image src={staff.avatar ?? ''} alt={staff.name} className="w-full h-full object-cover" />
+            <Image src={staff.avatar_url ?? ''} alt={staff.full_name} className="w-full h-full object-cover" />
           </div>
           <div className={cn('absolute -bottom-1 -right-1 size-5 rounded-full border-2 border-card', STATUS_DOT[staff.status])} />
         </div>
 
         <div className="flex-1">
-          <h3 className="font-semibold text-card-foreground text-lg">{staff.name}</h3>
+          <h3 className="font-semibold text-card-foreground text-lg">{staff.full_name}</h3>
           <div className="mt-1 flex items-center gap-2">
-            <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(staff.role))}>
-              {staff.roleDisplay}
+            <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(staff.position))}>
+              {ROLE_LABEL[staff.position] ?? staff.position}
             </span>
             <span className={cn('rounded-full px-2 py-1 text-xs font-medium', STATUS_BG[staff.status], STATUS_COLOR[staff.status])}>
-              {staff.statusDisplay}
+              {STATUS_LABEL[staff.status] ?? staff.status}
             </span>
           </div>
         </div>
@@ -119,15 +118,15 @@ const StaffCard = memo<StaffCardProps>(({
     <div className="space-y-2 mb-4">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Icon name="Phone" size={14} />
-        <span>{staff.phone}</span>
+        <span>{staff.phone ?? '---'}</span>
       </div>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Icon name="Mail" size={14} />
-        <span>{staff.email}</span>
+        <span>{staff.email ?? '---'}</span>
       </div>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Icon name="Calendar" size={14} />
-        <span>Ngày vào làm: {staff.joinDate ? new Date(staff.joinDate).toLocaleDateString('vi-VN') : '---'}</span>
+        <span>Ngày vào làm: {staff.hire_date ? new Date(staff.hire_date).toLocaleDateString('vi-VN') : '---'}</span>
       </div>
     </div>
 

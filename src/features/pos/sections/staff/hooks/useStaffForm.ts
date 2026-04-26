@@ -10,20 +10,19 @@ import {
     updateRestaurantStaffPermissions,
     updateRestaurantStaffStatus,
 } from '@/services/staff';
-import type { StaffPosition, StaffStatus, StaffDetail, StaffApiEndpoint } from '@/types/staff-type';
+import type { StaffPosition, StaffStatus, StaffDetail, StaffApiEndpoint, StaffSummary } from '@/types/staff-type';
 import type { StaffFormData, StaffFormMode, StaffSubmitSection } from '../components/StaffFormModal';
-import type { Staff } from '../components/StaffCard';
 
 const DEFAULT_FORM_DATA: StaffFormData = {
-    userId: '',
-    employeeCode: '',
-    name: '',
+    user_id: '',
+    employee_code: '',
+    full_name: '',
     phone: '',
     email: '',
-    role: '',
+    position: '',
     status: 'active',
-    startDate: '',
-    avatar: '',
+    hire_date: '',
+    avatar_url: '',
     permissions: {
         can_discount: false,
         can_cancel_order: false,
@@ -71,29 +70,29 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
     }, [resetForm]);
 
     const openEditModal = React.useCallback(async (
-        staff: Staff,
+        staff: StaffSummary,
         externalDetailSetter?: (detail: StaffDetail) => void,
         knownDetail?: StaffDetail | null,
     ) => {
         setStaffModalMode('edit');
-        setEditingStaffId(staff._id);
+        setEditingStaffId(staff.id);
         setShowStaffModal(true);
 
         try {
-            const detail = knownDetail ?? await getRestaurantStaffDetail(restaurantId, staff._id);
+            const detail = knownDetail ?? await getRestaurantStaffDetail(restaurantId, staff.id);
             if (externalDetailSetter) externalDetailSetter(detail);
             setOriginalDetail(detail);
 
             setStaffFormData({
-                userId: detail.user_id,
-                employeeCode: detail.employee_code,
-                name: detail.full_name,
+                user_id: detail.user_id,
+                employee_code: detail.employee_code,
+                full_name: detail.full_name,
                 phone: detail.phone ?? '',
                 email: detail.email ?? '',
-                role: detail.position,
+                position: detail.position,
                 status: detail.status,
-                startDate: detail.hire_date ? detail.hire_date.slice(0, 10) : '',
-                avatar: detail.avatar_url ?? '',
+                hire_date: detail.hire_date ? detail.hire_date.slice(0, 10) : '',
+                avatar_url: detail.avatar_url ?? '',
                 permissions: detail.permissions ? {
                     can_discount: detail.permissions.can_discount,
                     can_cancel_order: detail.permissions.can_cancel_order,
@@ -109,7 +108,7 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
         }
     }, [restaurantId]);
 
-    const handleFieldChange = React.useCallback((field: keyof StaffFormData, value: string | boolean | typeof DEFAULT_FORM_DATA.permissions) => {
+    const handleFieldChange = React.useCallback((field: keyof StaffFormData, value: string | typeof DEFAULT_FORM_DATA.permissions) => {
         setStaffFormData((prev) => ({ ...prev, [field]: value }));
     }, []);
 
@@ -117,7 +116,7 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
         section: StaffSubmitSection = 'all',
         payload?: { avatarUrl?: string },
     ) => {
-        if (!staffFormData.name || !staffFormData.role) {
+        if (!staffFormData.full_name || !staffFormData.position) {
             toast.error('Vui lòng nhập đầy đủ thông tin bắt buộc');
             return;
         }
@@ -125,22 +124,22 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
         setIsSubmitting(true);
         try {
             if (staffModalMode === 'add') {
-                if (!staffFormData.userId || !staffFormData.employeeCode || !staffFormData.startDate) {
+                if (!staffFormData.user_id || !staffFormData.employee_code || !staffFormData.hire_date) {
                     toast.error('Vui lòng nhập user ID, mã nhân viên và ngày bắt đầu');
                     setIsSubmitting(false);
                     return;
                 }
 
                 const createResult = await createRestaurantStaff(restaurantId, {
-                    user_id: staffFormData.userId.trim(),
-                    employee_code: staffFormData.employeeCode.trim(),
-                    full_name: staffFormData.name.trim(),
-                    position: staffFormData.role as StaffPosition,
-                    hire_date: staffFormData.startDate,
+                    user_id: staffFormData.user_id.trim(),
+                    employee_code: staffFormData.employee_code.trim(),
+                    full_name: staffFormData.full_name.trim(),
+                    position: staffFormData.position,
+                    hire_date: staffFormData.hire_date,
                     phone: staffFormData.phone.trim() || undefined,
                     email: staffFormData.email.trim() || undefined,
                     status: (staffFormData.status || 'active') as StaffStatus,
-                    avatar_url: staffFormData.avatar.trim() || undefined,
+                    avatar_url: staffFormData.avatar_url.trim() || undefined,
                 });
                 
                 if (staffFormData.permissions) {
@@ -161,13 +160,13 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
                     }
                 };
 
-                const normalizedName = staffFormData.name.trim();
-                const normalizedRole = staffFormData.role as StaffPosition;
-                const normalizedHireDate = staffFormData.startDate || '';
+                const normalizedName = staffFormData.full_name.trim();
+                const normalizedRole = staffFormData.position as StaffPosition;
+                const normalizedHireDate = staffFormData.hire_date || '';
                 const normalizedPhone = staffFormData.phone.trim();
                 const normalizedEmail = staffFormData.email.trim();
-                const normalizedUserId = staffFormData.userId.trim();
-                const normalizedAvatar = (payload?.avatarUrl ?? staffFormData.avatar).trim();
+                const normalizedUserId = staffFormData.user_id.trim();
+                const normalizedAvatar = (payload?.avatarUrl ?? staffFormData.avatar_url).trim();
 
                 const originalPermissions: StaffFormData['permissions'] = originalDetail?.permissions
                     ? {

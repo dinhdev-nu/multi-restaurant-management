@@ -3,34 +3,33 @@ import Icon from '@/components/AppIcon';
 import Image from '@/components/AppImage';
 import { cn } from '@/lib/utils';
 import Button from '../../../components/Button';
-import type { StaffDetail } from '@/types/staff-type';
-import type { Staff } from './StaffCard';
+import type { StaffDetail, StaffSummary, StaffPosition, StaffStatus } from '@/types/staff-type';
 
 interface StaffDetailsModalProps {
   isOpen: boolean;
-  staff: Staff | null;
+  staff: StaffSummary | null;
   detail?: StaffDetail | null;
   onClose: () => void;
-  onEdit: (staff: Staff, detail?: StaffDetail | null) => void;
+  onEdit: (staff: StaffSummary, detail?: StaffDetail | null) => void;
 }
 
 // ── Style maps ────────────────────────────────────────────────────────────────
 
-const STATUS_COLOR: Record<string, string> = {
+const STATUS_COLOR: Record<StaffStatus, string> = {
   'active': 'text-success',
   'inactive': 'text-muted-foreground',
   'on_leave': 'text-warning',
   'terminated': 'text-error',
 };
 
-const STATUS_BG: Record<string, string> = {
+const STATUS_BG: Record<StaffStatus, string> = {
   'active': 'bg-success/10',
   'inactive': 'bg-muted',
   'on_leave': 'bg-warning/10',
   'terminated': 'bg-error/10',
 };
 
-const STATUS_DOT: Record<string, string> = {
+const STATUS_DOT: Record<StaffStatus, string> = {
   'active': 'bg-success',
   'inactive': 'bg-muted-foreground',
   'on_leave': 'bg-warning',
@@ -40,8 +39,24 @@ const STATUS_DOT: Record<string, string> = {
 const ROLE_COLOR: Record<string, string> = {
   manager: 'bg-accent text-accent-foreground',
   cashier: 'bg-secondary text-secondary-foreground',
+  waiter: 'bg-warning text-warning-foreground',
   kitchen: 'bg-success text-success-foreground',
   delivery: 'bg-primary text-primary-foreground',
+};
+
+const ROLE_LABEL: Record<StaffPosition, string> = {
+  manager: 'Quản lý',
+  cashier: 'Thu ngân',
+  waiter: 'Phục vụ',
+  kitchen: 'Nhân viên bếp',
+  delivery: 'Giao hàng',
+};
+
+const STATUS_LABEL: Record<StaffStatus, string> = {
+  active: 'Đang làm việc',
+  inactive: 'Không hoạt động',
+  on_leave: 'Đang nghỉ',
+  terminated: 'Đã nghỉ việc',
 };
 
 const getRoleColor = (role: string): string =>
@@ -59,8 +74,8 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
   if (!isOpen || !staff) return null;
 
   const infoRows = [
-    { icon: 'Badge', label: 'Mã nhân viên', value: detail?.employee_code ?? staff.employeeId ?? '---' },
-    { icon: 'User', label: 'User ID', value: detail?.user_id ?? staff.userId ?? '---' },
+    { icon: 'Badge', label: 'Mã nhân viên', value: detail?.employee_code ?? staff.employee_code ?? '---' },
+    { icon: 'User', label: 'User ID', value: detail?.user_id ?? staff.user_id ?? '---' },
     { icon: 'Phone', label: 'Số điện thoại', value: detail?.phone ?? staff.phone ?? '---' },
     { icon: 'Mail', label: 'Email', value: detail?.email ?? staff.email ?? '---' },
     {
@@ -68,7 +83,7 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
       label: 'Ngày vào làm',
       value: detail?.hire_date
         ? new Date(detail.hire_date).toLocaleDateString('vi-VN')
-        : (staff.joinDate ? new Date(staff.joinDate).toLocaleDateString('vi-VN') : '---'),
+        : (staff.hire_date ? new Date(staff.hire_date).toLocaleDateString('vi-VN') : '---'),
     },
     {
       icon: 'Clock',
@@ -101,18 +116,18 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="size-16 rounded-full overflow-hidden bg-muted">
-                <Image src={staff.avatar ?? ''} alt={staff.name} className="w-full h-full object-cover" />
+                <Image src={staff.avatar_url ?? ''} alt={staff.full_name} className="w-full h-full object-cover" />
               </div>
               <div className={cn('absolute -bottom-1 -right-1 size-5 rounded-full border-2 border-card', STATUS_DOT[staff.status] ?? 'bg-error')} />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-card-foreground">{staff.name}</h2>
+              <h2 className="text-xl font-semibold text-card-foreground">{staff.full_name}</h2>
               <div className="mt-1 flex items-center gap-2">
-                <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(staff.role))}>
-                  {staff.roleDisplay}
+                <span className={cn('rounded-full px-2 py-1 text-xs font-medium', getRoleColor(staff.position))}>
+                  {ROLE_LABEL[staff.position] ?? staff.position}
                 </span>
                 <span className={cn('rounded-full px-2 py-1 text-xs font-medium', STATUS_BG[staff.status] ?? '', STATUS_COLOR[staff.status] ?? '')}>
-                  {staff.statusDisplay}
+                  {STATUS_LABEL[staff.status] ?? staff.status}
                 </span>
               </div>
             </div>
