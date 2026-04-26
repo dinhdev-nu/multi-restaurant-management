@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import PosLayout from '@/layouts/pos/PosLayout';
 import MainPosSection from '@/features/pos/sections/main-pos/MainPosSection';
 import TableSection from '@/features/pos/sections/table/TableSection';
-import { POS_BASE_PATH, POS_DEFAULT_SLUG } from '@/routes/pos-route';
+import { POS_BASE_PATH } from '@/routes/pos-route';
+import { PosProvider } from '@/features/pos/contexts/PosContext';
+import { usePosContext } from '@/features/pos/contexts/usePosContext';
+import RejectToPreviousPage from '@/components/navigation/RejectToPreviousPage';
 
-import { usePOSStore, type POSSection } from '@/stores/pos-store';
+import type { POSSection } from '@/stores/pos-store';
 import {
   demoNotifications,
-  demoRestaurant,
   getRelativeTime,
 } from '@/features/pos/pos-mock';
 import PaymentSection from '@/features/pos/sections/payment/PaymentSection';
@@ -49,50 +51,34 @@ const getPosSubPath = (pathname: string, slug: string) => {
   return subPath || '/';
 };
 
-const PosPage: React.FC = () => {
+const PosPageContent: React.FC<{ slug: string }> = ({ slug }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { slug } = useParams<{ slug: string }>();
-  const currentSlug = slug ?? POS_DEFAULT_SLUG;
+  const { loading, error } = usePosContext();
 
-  const isOperational = usePOSStore(state => state.isOperational);
-  const activeSection = usePOSStore(state => state.activeSection);
-  const toggleOperational = usePOSStore(state => state.toggleOperational);
-  const setActiveSection = usePOSStore(state => state.setActiveSection);
+  const [isOperational, setIsOperational] = useState(true);
+  const subPath = getPosSubPath(location.pathname, slug);
+  const activeSection = ROUTE_TO_SECTION[subPath] ?? 'main-pos';
 
   useEffect(() => {
-    if (!slug) {
-      navigate(`${POS_BASE_PATH}/${POS_DEFAULT_SLUG}`, { replace: true });
-      return;
+    if (!ROUTE_TO_SECTION[subPath]) {
+      navigate(`${POS_BASE_PATH}/${slug}`, { replace: true });
     }
-
-    const subPath = getPosSubPath(location.pathname, currentSlug);
-    const nextSection = ROUTE_TO_SECTION[subPath];
-
-    if (!nextSection) {
-      navigate(`${POS_BASE_PATH}/${currentSlug}`, { replace: true });
-      return;
-    }
-
-    if (activeSection !== nextSection) {
-      setActiveSection(nextSection);
-    }
-  }, [slug, currentSlug, location.pathname, activeSection, setActiveSection, navigate]);
+  }, [navigate, slug, subPath]);
 
   const handleToggleOperational = React.useCallback(() => {
-    toggleOperational();
-  }, [toggleOperational]);
+    setIsOperational(prev => !prev);
+  }, []);
 
   const handleSectionChange = React.useCallback((section: string) => {
     const normalizedSection = section as POSSection;
-    setActiveSection(normalizedSection);
 
     const targetSuffix = SECTION_TO_ROUTE_SUFFIX[normalizedSection] ?? '';
-    const targetPath = `${POS_BASE_PATH}/${currentSlug}${targetSuffix}`;
+    const targetPath = `${POS_BASE_PATH}/${slug}${targetSuffix}`;
     if (location.pathname !== targetPath) {
       navigate(targetPath);
     }
-  }, [setActiveSection, navigate, currentSlug, location.pathname]);
+  }, [navigate, slug, location.pathname]);
 
   const renderSectionContent = () => {
     switch (activeSection) {
@@ -113,10 +99,24 @@ const PosPage: React.FC = () => {
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-lg font-semibold">Loading POS data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return <RejectToPreviousPage />;
+  }
+
   return (
     <PosLayout
-      storeName="POS Manager"
-      restaurant={demoRestaurant}
       notifications={demoNotifications}
       isOperational={isOperational}
       onToggleOperational={handleToggleOperational}
@@ -126,6 +126,21 @@ const PosPage: React.FC = () => {
     >
       {renderSectionContent()}
     </PosLayout>
+  );
+};
+
+const PosPage: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const currentSlug = slug?.trim() ?? '';
+
+  if (!currentSlug) {
+    return <RejectToPreviousPage />;
+  }
+
+  return (
+    <PosProvider slug={currentSlug}>
+      <PosPageContent slug={currentSlug} />
+    </PosProvider>
   );
 };
 

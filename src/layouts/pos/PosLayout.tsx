@@ -2,15 +2,16 @@ import { useState, useCallback, memo, type ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import PosHeader, { type HeaderProps } from './PosHeader';
 import PosSidebar, { type SidebarProps } from './PosSidebar';
+import { usePosContext, useRequiredPosData } from '@/features/pos/contexts/usePosContext';
 import './pos.css';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-// Lấy props Header cần (bỏ onToggleSidebar vì Layout tự xử lý)
-type LayoutHeaderProps = Omit<HeaderProps, 'onToggleSidebar'>;
+// Header data domain (restaurant/storeName) now comes from POS context.
+type LayoutHeaderProps = Pick<HeaderProps, 'notifications' | 'isOperational' | 'onToggleOperational' | 'getRelativeTime'>;
 
 // Lấy props Sidebar cần (bỏ isCollapsed / onToggleCollapse vì Layout tự xử lý)
-type LayoutSidebarProps = Omit<SidebarProps, 'isCollapsed' | 'onToggleCollapse'>;
+type LayoutSidebarProps = Omit<SidebarProps, 'isCollapsed' | 'onToggleCollapse' | 'userRole'>;
 
 interface LayoutProps extends LayoutHeaderProps, LayoutSidebarProps {
   /** Nếu không dùng React Router <Outlet />, truyền children thay thế */
@@ -22,19 +23,26 @@ interface LayoutProps extends LayoutHeaderProps, LayoutSidebarProps {
 const PosLayout = memo<LayoutProps>(({
   children,
   // Header props
-  storeName,
-  restaurant,
   notifications,
   isOperational,
   onToggleOperational,
   getRelativeTime,
   // Sidebar props
-  userRole = 'owner',
   activeSection = 'main-pos',
   onSectionChange,
 }) => {
   // State duy nhất trong Layout: trạng thái sidebar
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const posData = useRequiredPosData();
+
+  const restaurant = posData.restaurant;
+  const storeName = posData.restaurant.name ?? 'POS Manager';
+  const userRole: SidebarProps['userRole'] =
+    posData.user.is_owner
+      ? 'owner'
+      : posData.user.is_admin
+        ? 'admin'
+        : 'staff';
 
   // useCallback để Header và Sidebar nhận reference ổn định, tránh re-render thừa
   const handleToggleSidebar = useCallback(() => {

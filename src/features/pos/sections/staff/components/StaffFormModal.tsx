@@ -8,6 +8,7 @@ import Input from '../../../components/Input';
 import Select from '../../../components/Select';
 
 export type StaffFormMode = 'add' | 'edit';
+export type StaffSubmitSection = 'all' | 'info' | 'account' | 'status' | 'avatar' | 'permissions';
 
 export interface StaffPermissionsData {
   can_discount: boolean;
@@ -50,7 +51,7 @@ interface StaffFormModalProps {
   isLoading?: boolean;
   onClose: () => void;
   onFieldChange: (field: keyof StaffFormData, value: string | boolean | StaffPermissionsData) => void;
-  onSubmit: () => void;
+  onSubmit: (section?: StaffSubmitSection, payload?: { avatarUrl?: string }) => void;
 }
 
 // ── Static options ────────────────────────────────────────────────────────────
@@ -94,6 +95,23 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
   const submitText = isEditMode ? 'Lưu thay đổi' : 'Thêm nhân viên';
   const submitIcon = isEditMode ? 'Save' : 'UserPlus';
 
+  const renderSectionSaveButton = (section: Exclude<StaffSubmitSection, 'all'>) => {
+    if (!isEditMode) return null;
+
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => onSubmit(section)}
+        disabled={isLoading || isUploading}
+        iconName="Save"
+        iconPosition="left"
+      >
+        Lưu phần này
+      </Button>
+    );
+  };
+
   const handleRemoveImage = () => {
     onFieldChange('avatar', '');
   };
@@ -106,6 +124,11 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
     try {
       const uploadedInfo = await uploadSingleFile(file);
       onFieldChange('avatar', uploadedInfo.url);
+
+      if (isEditMode) {
+        onSubmit('avatar', { avatarUrl: uploadedInfo.url });
+      }
+
       toast.success('Tải ảnh lên thành công');
     } catch (error: Error | unknown) {
       const err = error as Error;
@@ -147,15 +170,135 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          {/* Avatar Upload */}
-          <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
-              <Icon name="Image" size={18} />
-              <span>Avatar URL</span>
-            </h3>
+          {/* Section: update-info */}
+          <div className="space-y-4 rounded-lg border border-border p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <Icon name="User" size={18} />
+                  <span>Thông tin hồ sơ</span>
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">Cập nhật qua API: update-info</p>
+              </div>
+              {renderSectionSaveButton('info')}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Mã nhân viên"
+                type="text"
+                placeholder="VD: NV001"
+                value={formData.employeeCode}
+                onChange={(e) => onFieldChange('employeeCode', e.target.value)}
+                error={errors.employeeCode}
+                required
+                disabled={isEditMode}
+              />
+              <Input
+                label="Họ và tên"
+                type="text"
+                placeholder="Nhập họ tên đầy đủ"
+                value={formData.name}
+                onChange={(e) => onFieldChange('name', e.target.value)}
+                error={errors.name}
+                required
+              />
+              <Select
+                label="Vai trò"
+                placeholder="Chọn vai trò"
+                options={ROLE_OPTIONS}
+                value={formData.role}
+                onChange={(event) => onFieldChange('role', event.target.value)}
+                error={errors.role}
+                required
+              />
+              <Input
+                label="Ngày bắt đầu"
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => onFieldChange('startDate', e.target.value)}
+                error={errors.startDate}
+                required={!isEditMode}
+              />
+              <Input
+                label="Số điện thoại"
+                type="tel"
+                placeholder="0123 456 789"
+                value={formData.phone}
+                onChange={(e) => onFieldChange('phone', e.target.value)}
+                error={errors.phone}
+              />
+              <Input
+                label="Email"
+                type="email"
+                placeholder="example@email.com"
+                value={formData.email}
+                onChange={(e) => onFieldChange('email', e.target.value)}
+                error={errors.email}
+              />
+            </div>
+          </div>
+
+          {/* Section: link-account */}
+          <div className="space-y-4 rounded-lg border border-border p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <Icon name="Link" size={18} />
+                  <span>Liên kết tài khoản</span>
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">Cập nhật qua API: link-account</p>
+              </div>
+              {renderSectionSaveButton('account')}
+            </div>
+
+            <Input
+              label="User ID liên kết"
+              type="text"
+              placeholder="Nhập user_id"
+              value={formData.userId}
+              onChange={(e) => onFieldChange('userId', e.target.value)}
+              error={errors.userId}
+              required
+            />
+          </div>
+
+          {/* Section: update-status */}
+          <div className="space-y-4 rounded-lg border border-border p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <Icon name="Activity" size={18} />
+                  <span>Trạng thái làm việc</span>
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">Cập nhật qua API: update-status</p>
+              </div>
+              {renderSectionSaveButton('status')}
+            </div>
+
+            <Select
+              label="Trạng thái"
+              placeholder="Chọn trạng thái"
+              options={STATUS_OPTIONS}
+              value={formData.status}
+              onChange={(event) => onFieldChange('status', event.target.value)}
+              error={errors.status}
+            />
+          </div>
+
+          {/* Section: update-avatar */}
+          <div className="space-y-4 rounded-lg border border-border p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <Icon name="Image" size={18} />
+                  <span>Ảnh đại diện</span>
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">Upload thành công sẽ tự cập nhật avatar</p>
+              </div>
+            </div>
 
             <div className="flex items-center gap-6">
-              {/* Preview */}
               <div className="relative">
                 <div className="size-24 overflow-hidden rounded-full border-2 border-border bg-muted">
                   {imagePreview ? (
@@ -177,7 +320,6 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                 )}
               </div>
 
-              {/* Upload Button */}
               <div className="flex-1 space-y-2">
                 <input
                   type="file"
@@ -186,8 +328,8 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
                   ref={fileInputRef}
                   onChange={handleFileChange}
                 />
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
                   iconName={isUploading ? 'Loader' : 'Upload'}
@@ -204,102 +346,19 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
             </div>
           </div>
 
-          {/* Basic Information */}
-          <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
-              <Icon name="User" size={18} />
-              <span>Thông tin cơ bản</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="User ID liên kết"
-                type="text"
-                placeholder="Nhập user_id"
-                value={formData.userId}
-                onChange={(e) => onFieldChange('userId', e.target.value)}
-                error={errors.userId}
-                required
-              />
-              <Input
-                label="Mã nhân viên"
-                type="text"
-                placeholder="VD: NV001"
-                value={formData.employeeCode}
-                onChange={(e) => onFieldChange('employeeCode', e.target.value)}
-                error={errors.employeeCode}
-                required
-              />
-              <Input
-                label="Họ và tên"
-                type="text"
-                placeholder="Nhập họ tên đầy đủ"
-                value={formData.name}
-                onChange={(e) => onFieldChange('name', e.target.value)}
-                error={errors.name}
-                required
-              />
-              <Input
-                label="Số điện thoại"
-                type="tel"
-                placeholder="0123 456 789"
-                value={formData.phone}
-                onChange={(e) => onFieldChange('phone', e.target.value)}
-                error={errors.phone}
-              />
-              <Input
-                label="Email"
-                type="email"
-                placeholder="example@email.com"
-                value={formData.email}
-                onChange={(e) => onFieldChange('email', e.target.value)}
-                error={errors.email}
-                className="md:col-span-2"
-              />
+          {/* Section: update-permissions */}
+          <div className="space-y-4 rounded-lg border border-border p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+                  <Icon name="Shield" size={18} />
+                  <span>Quyền truy cập</span>
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">Cập nhật qua API: update-permissions</p>
+              </div>
+              {renderSectionSaveButton('permissions')}
             </div>
-          </div>
 
-          {/* Work Information */}
-          <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
-              <Icon name="Briefcase" size={18} />
-              <span>Thông tin công việc</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                label="Vai trò"
-                placeholder="Chọn vai trò"
-                options={ROLE_OPTIONS}
-                value={formData.role}
-                onChange={(event) => onFieldChange('role', event.target.value)}
-                error={errors.role}
-                required
-              />
-              <Select
-                label="Trạng thái"
-                placeholder="Chọn trạng thái"
-                options={STATUS_OPTIONS}
-                value={formData.status}
-                onChange={(event) => onFieldChange('status', event.target.value)}
-                error={errors.status}
-              />
-              <Input
-                label="Ngày bắt đầu"
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => onFieldChange('startDate', e.target.value)}
-                error={errors.startDate}
-                required={!isEditMode}
-              />
-            </div>
-          </div>
-
-          {/* Permissions Information */}
-          <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-lg font-medium text-foreground">
-              <Icon name="Shield" size={18} />
-              <span>Quyền truy cập</span>
-            </h3>
-            
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 bg-muted/20 rounded-lg p-4">
               {PERMISSIONS_CONFIG.map((perm) => {
                 const isChecked = !!formData.permissions?.[perm.key as keyof StaffPermissionsData];
@@ -330,15 +389,17 @@ const StaffFormModal: React.FC<StaffFormModalProps> = ({
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Hủy
           </Button>
-          <Button
-            variant="default"
-            onClick={onSubmit}
-            disabled={isLoading}
-            iconName={submitIcon}
-            iconPosition="left"
-          >
-            {submitText}
-          </Button>
+          {!isEditMode && (
+            <Button
+              variant="default"
+              onClick={() => onSubmit('all')}
+              disabled={isLoading}
+              iconName={submitIcon}
+              iconPosition="left"
+            >
+              {submitText}
+            </Button>
+          )}
         </div>
       </div>
     </div>

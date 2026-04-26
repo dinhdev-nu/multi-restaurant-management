@@ -2,6 +2,7 @@ import { memo, useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import Icon from '@/components/AppIcon';
 import Button from '@/features/pos/components/Button';
+import type { PosRestaurant } from '@/types/pos-init-type';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -14,16 +15,9 @@ export interface Notification {
   createdAt: Date | string;
 }
 
-export interface RestaurantInfo {
-  id: string;
-  name: string;
-  logo?: string;
-  orderUrl: string;
-}
-
 export interface HeaderProps {
   storeName?: string;
-  restaurant?: RestaurantInfo;
+  restaurant?: PosRestaurant;
   notifications?: Notification[];
   isOperational?: boolean;
   onToggleOperational?: () => void;
@@ -98,7 +92,10 @@ const Header = memo<HeaderProps>(({
   const [showQRDialog, setShowQRDialog] = useState(false);
 
   const displayName = restaurant?.name ?? storeName;
-  const logoSrc = restaurant?.logo ?? '/assets/images/restaurant_logo.png';
+  const logoSrc = restaurant?.logo_url ?? '/assets/images/restaurant_logo.png';
+  const orderUrl = restaurant
+    ? `${window.location.origin}/public/restaurants/${restaurant.slug}`
+    : '';
   const unreadCount = notifications.length;
 
   const closeNotifications = () => setShowNotif(false);
@@ -269,8 +266,8 @@ const Header = memo<HeaderProps>(({
       {/* ── QR Dialog ─────────────────────────────────────────────────────── */}
       {showQRDialog && restaurant && (
         <div className="fixed inset-0 bg-black/50 z-[1300] flex items-center justify-center p-4" onClick={() => setShowQRDialog(false)}>
-          <div className="bg-card rounded-lg shadow-modal max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-border flex items-center justify-between">
+          <div className="bg-card rounded-lg shadow-modal max-w-sm w-full max-h-[82vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Icon name="QrCode" size={24} className="text-primary flex-shrink-0" />
                 <div>
@@ -282,17 +279,17 @@ const Header = memo<HeaderProps>(({
                 <Icon name="X" size={20} />
               </Button>
             </div>
-            <div className="p-8 flex flex-col items-center">
-              <div className="bg-white p-4 rounded-lg">
-                <QRCodeSVG value={restaurant.orderUrl} size={256} level="H" includeMargin />
+            <div className="p-5 flex flex-col items-center">
+              <div className="bg-white p-3 rounded-lg">
+                <QRCodeSVG value={orderUrl} size={196} level="H" includeMargin />
               </div>
-              <p className="text-sm text-muted-foreground mt-4 text-center">Quét mã QR để đặt món trực tuyến</p>
-              <div className="mt-4 p-3 bg-muted/50 rounded-lg w-full">
-                <p className="text-xs text-muted-foreground text-center break-all">{restaurant.orderUrl}</p>
+              <p className="text-sm text-muted-foreground mt-3 text-center">Quét mã QR để đặt món trực tuyến</p>
+              <div className="mt-3 p-2.5 bg-muted/50 rounded-lg w-full">
+                <p className="text-xs text-muted-foreground text-center break-all">{orderUrl}</p>
               </div>
             </div>
-            <div className="p-6 border-t border-border flex items-center justify-between">
-              <Button variant="outline" size="sm" iconName="Copy" iconPosition="left" onClick={() => navigator.clipboard.writeText(restaurant.orderUrl)}>
+            <div className="p-4 border-t border-border flex items-center justify-between">
+              <Button variant="outline" size="sm" iconName="Copy" iconPosition="left" onClick={() => navigator.clipboard.writeText(orderUrl)}>
                 Sao chép link
               </Button>
               <Button variant="default" size="sm" onClick={() => setShowQRDialog(false)}>Đóng</Button>

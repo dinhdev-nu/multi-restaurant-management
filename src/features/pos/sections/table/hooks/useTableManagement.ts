@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
-import { usePOSStore } from '@/stores/pos-store';
 import { demoRestaurant } from '@/features/pos/pos-mock';
 import {
     listTables,
@@ -21,7 +20,6 @@ import type { NewTableForm } from '../components/TableAddModal';
 
 export const useTableManagement = () => {
     const restaurantId = demoRestaurant.id;
-    const syncSelectedTable = usePOSStore(state => state.setSelectedTable);
 
     const [tables, setTables] = useState<Table[]>(INITIAL_TABLES);
     const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
@@ -122,8 +120,7 @@ export const useTableManagement = () => {
 
     const syncTableSelection = useCallback((table: Table | null) => {
         setSelectedTableId(table?._id ?? null);
-        syncSelectedTable(table ? String(table.number) : null);
-    }, [syncSelectedTable]);
+    }, []);
 
     const updateTableById = useCallback((id: string, updater: (table: Table) => Table) => {
         setTables(prev => prev.map(table => (table._id === id ? updater(table) : table)));

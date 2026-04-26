@@ -3,10 +3,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { getOwnerRestaurants } from "@/services/restaurants";
 import type { OwnerRestaurantListItem } from "@/types/restaurant-type";
 import { useNavigate } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
+import { toast } from "sonner";
 import {
     MapPin,
     Mail,
@@ -67,6 +79,33 @@ export function ListRestaurantsSection() {
     const [restaurants, setRestaurants] = useState<OwnerRestaurantListItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [shareTarget, setShareTarget] = useState<OwnerRestaurantListItem | null>(null);
+    const [shareMode, setShareMode] = useState<"public" | "pos">("public");
+
+    const sharePublicUrl = shareTarget
+        ? `${window.location.origin}/public/restaurants/${shareTarget.slug}`
+        : "";
+
+    const sharePosUrl = shareTarget
+        ? `${window.location.origin}/pos/${shareTarget.slug}`
+        : "";
+
+    useEffect(() => {
+        if (shareTarget) {
+            setShareMode("public");
+        }
+    }, [shareTarget]);
+
+    const handleCopyShareLink = async (url: string, label: string) => {
+        if (!url) return;
+
+        try {
+            await navigator.clipboard.writeText(url);
+            toast.success(`Đã sao chép link ${label}`);
+        } catch {
+            toast.error("Không thể sao chép link. Vui lòng thử lại.");
+        }
+    };
 
     useEffect(() => {
         let isActive = true;
@@ -163,8 +202,8 @@ export function ListRestaurantsSection() {
                         return (
                             <Card
                                 key={restaurant._id}
-                                className="h-full border-border bg-card transition-colors duration-200 group animate-in fade-in slide-in-from-bottom-2"
-                                style={{ animationDelay: `${index * 75}ms` }}
+                                className="h-full border-border bg-card transition-colors duration-200 group animate-in fade-in slide-in-from-bottom-2 duration-200"
+                                style={{ animationDelay: `${index * 30}ms` }}
                             >
                                 <CardContent className="flex h-full flex-col p-5">
                                     <div className="mb-4 flex min-w-0 items-start justify-between gap-3">
@@ -186,7 +225,7 @@ export function ListRestaurantsSection() {
                                             </div>
                                         </div>
                                         <Badge className={`${tierColors[tier]} shrink-0 border`}>
-                                            {tier === "Công khai" ? "Công khai" : "Bản nháp - Cần xác nhận"}
+                                            {tier === "Công khai" ? "Công khai" : "Chưa mở công khai"}
                                         </Badge>
                                     </div>
 
@@ -259,7 +298,12 @@ export function ListRestaurantsSection() {
 
                                     {/* Quick Actions */}
                                     <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
-                                        <Button variant="outline" size="sm" className="h-10 flex-1 bg-transparent">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-10 flex-1 bg-transparent"
+                                            onClick={() => navigate(`/pos/${restaurant.slug}`)}
+                                        >
                                             <Store className="w-3.5 h-3.5 mr-1.5" />
                                             Bán hàng
                                         </Button>
@@ -287,7 +331,12 @@ export function ListRestaurantsSection() {
                                             <Settings className="w-3.5 h-3.5 mr-1.5" />
                                             {needsVerification ? "Quản lý xác nhận" : "Quản lý"}
                                         </Button>
-                                        <Button variant="ghost" size="sm" aria-label={`Chia sẻ ${restaurant.name}`}>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            aria-label={`Chia sẻ ${restaurant.name}`}
+                                            onClick={() => setShareTarget(restaurant)}
+                                        >
                                             <Share2 className="w-4 h-4" />
                                         </Button>
                                     </div>
@@ -302,6 +351,81 @@ export function ListRestaurantsSection() {
                     </div>
                 )}
             </div>
+
+            <Dialog open={Boolean(shareTarget)} onOpenChange={(isOpen) => !isOpen && setShareTarget(null)}>
+                <DialogContent className="sm:max-w-md" showCloseButton={false}>
+                    <DialogHeader>
+                        <DialogTitle className="text-base font-semibold">Chia sẻ nhà hàng</DialogTitle>
+                        <DialogDescription>
+                            Có 2 link chia sẻ: trang Public và trang POS.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4 py-2">
+                        <Tabs value={shareMode} onValueChange={(value) => setShareMode(value === "pos" ? "pos" : "public")}>
+                            <TabsList className="h-11 w-full gap-1 border border-border bg-secondary p-1">
+                                <TabsTrigger
+                                    value="public"
+                                    className="flex-1 data-[state=active]:bg-card data-[state=active]:text-foreground"
+                                >
+                                    Public
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="pos"
+                                    className="flex-1 data-[state=active]:bg-card data-[state=active]:text-foreground"
+                                >
+                                    POS
+                                </TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+
+                        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+                            <div
+                                className="flex w-[200%] transition-transform duration-300 ease-out"
+                                style={{ transform: shareMode === "public" ? "translateX(0%)" : "translateX(-50%)" }}
+                            >
+                                <div className="w-1/2 p-3">
+                                    <p className="mb-3 text-sm font-medium text-foreground">Link Public</p>
+                                    <div className="mb-3 flex justify-center rounded-lg border border-border bg-background p-3">
+                                        <QRCodeSVG value={sharePublicUrl} size={140} includeMargin />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Input value={sharePublicUrl} readOnly aria-label="Link public nhà hàng" />
+                                        <Button
+                                            variant="default"
+                                            onClick={() => handleCopyShareLink(sharePublicUrl, "Public")}
+                                        >
+                                            Copy
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="w-1/2 p-3 border-l border-border">
+                                    <p className="mb-3 text-sm font-medium text-foreground">Link POS</p>
+                                    <div className="mb-3 flex justify-center rounded-lg border border-border bg-background p-3">
+                                        <QRCodeSVG value={sharePosUrl} size={140} includeMargin />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Input value={sharePosUrl} readOnly aria-label="Link POS nhà hàng" />
+                                        <Button
+                                            variant="default"
+                                            onClick={() => handleCopyShareLink(sharePosUrl, "POS")}
+                                        >
+                                            Copy
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="default" onClick={() => setShareTarget(null)}>
+                            Đóng
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

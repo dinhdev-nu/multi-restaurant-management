@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import MenuCategory from './components/MenuCategory';
 import MenuGrid from './components/MenuGrid';
 import OrderCart from './components/OrderCart';
@@ -8,28 +8,82 @@ import Button from '../../components/Button';
 import Icon from '@/components/AppIcon';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 import { usePOSStore } from '@/stores/pos-store';
+import { usePosContext } from '@/features/pos/contexts/usePosContext';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const MainPosSection: React.FC = () => {
-  const categories = usePOSStore(state => state.categories);
+  const categories = usePOSStore(state => state.menuCategories);
   const menuItems = usePOSStore(state => state.menuItems);
-  const cartItems = usePOSStore(state => state.cartItems);
-  const orderNumber = usePOSStore(state => state.orderNumber);
-  const selectedTable = usePOSStore(state => state.selectedTable);
-  const selectedStaff = usePOSStore(state => state.selectedStaff);
-  const draftOrderId = usePOSStore(state => state.draftOrderId);
-  const draftCustomerInfo = usePOSStore(state => state.draftCustomerInfo);
-  const isCreatingOrder = usePOSStore(state => state.isCreatingOrder);
-  const customerOrders = usePOSStore(state => state.customerOrders);
+  const tables = usePOSStore(state => state.tables);
+  const { data: posData } = usePosContext();
+  const staff = posData?.staff ?? null;
 
-  const handleAddToCart = usePOSStore(state => state.addToCart);
-  const handleUpdateQuantity = usePOSStore(state => state.updateQuantity);
-  const handleRemoveItem = usePOSStore(state => state.removeItem);
-  const handleUpdateNote = usePOSStore(state => state.updateNote);
-  const onClearCart = usePOSStore(state => state.clearCart);
-  const onTableChange = usePOSStore(state => state.setSelectedTable);
-  const onStaffChange = usePOSStore(state => state.setSelectedStaff);
+  const [cartItems, setCartItems] = useState<Array<{
+    _id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    note?: string;
+  }>>([]);
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<string | null>(staff?._id ?? null);
+  const [isCreatingOrder] = useState(false);
+  const customerOrders: Array<{
+    _id: string;
+    status: 'pending' | 'processing' | 'completed' | 'cancelled';
+    paymentStatus: 'paid' | 'unpaid';
+  }> = [];
+  const orderNumber: string | null = null;
+  const draftOrderId: string | null = null;
+  const draftCustomerInfo: { name: string } | null = null;
+
+  const handleAddToCart = useCallback((item: { _id: string; name: string; price: number }) => {
+    setCartItems(prev => {
+      const existing = prev.find(i => i._id === item._id);
+      if (existing) {
+        return prev.map(i => (i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i));
+      }
+      return [...prev, { _id: item._id, name: item.name, price: item.price, quantity: 1, note: '' }];
+    });
+  }, []);
+
+  const handleUpdateQuantity = useCallback((id: string, qty: number) => {
+    setCartItems(prev => prev.map(i => (i._id === id ? { ...i, quantity: Math.max(1, qty) } : i)));
+  }, []);
+
+  const handleRemoveItem = useCallback((id: string) => {
+    setCartItems(prev => prev.filter(i => i._id !== id));
+  }, []);
+
+  const handleUpdateNote = useCallback((id: string, note: string) => {
+    setCartItems(prev => prev.map(i => (i._id === id ? { ...i, note } : i)));
+  }, []);
+
+  const onClearCart = useCallback(() => {
+    setCartItems([]);
+  }, []);
+
+  const onTableChange = useCallback((value: string) => {
+    setSelectedTable(value || null);
+  }, []);
+
+  const onStaffChange = useCallback((value: string) => {
+    setSelectedStaff(value || null);
+  }, []);
+
+  const tableOptions = useMemo(() => {
+    const totalTables = Array.isArray(tables?.total) ? tables.total : [];
+    return totalTables.map((table) => ({
+      value: table._id,
+      label: table.name?.trim() || table.table_number,
+    }));
+  }, [tables]);
+
+  const staffOptions = useMemo(() => {
+    if (!staff) return [];
+    return [{ value: staff._id, label: staff.full_name }];
+  }, [staff]);
 
   // Stubs for functionality not fully implemented
   const onSummaryChange = () => { };
@@ -41,7 +95,9 @@ const MainPosSection: React.FC = () => {
   const onReorderDraft = () => { };
 
   // Redundant locally calculated dependency for format
-  const orderSummary = { total: 0 };
+  const orderSummary = {
+    total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+  };
   const [showRecentOrders, setShowRecentOrders] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [showMobileCart, setShowMobileCart] = useState(false);
@@ -132,6 +188,8 @@ const MainPosSection: React.FC = () => {
               onTableChange={onTableChange}
               selectedStaff={selectedStaff}
               onStaffChange={onStaffChange}
+              tableOptions={tableOptions}
+              staffOptions={staffOptions}
               onSummaryChange={onSummaryChange}
             />
           </div>

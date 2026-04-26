@@ -10,8 +10,8 @@ import {
     updateRestaurantStaffPermissions,
     updateRestaurantStaffStatus,
 } from '@/services/staff';
-import type { StaffPosition, StaffStatus, StaffDetail } from '@/types/staff-type';
-import type { StaffFormData, StaffFormMode } from '../components/StaffFormModal';
+import type { StaffPosition, StaffStatus, StaffDetail, StaffApiEndpoint } from '@/types/staff-type';
+import type { StaffFormData, StaffFormMode, StaffSubmitSection } from '../components/StaffFormModal';
 import type { Staff } from '../components/StaffCard';
 
 const DEFAULT_FORM_DATA: StaffFormData = {
@@ -34,6 +34,19 @@ const DEFAULT_FORM_DATA: StaffFormData = {
         can_manage_menu: false,
     },
 };
+
+const arePermissionsEqual = (
+    left: StaffFormData['permissions'],
+    right: StaffFormData['permissions'],
+) => (
+    left.can_discount === right.can_discount
+    && left.can_cancel_order === right.can_cancel_order
+    && left.can_process_payment === right.can_process_payment
+    && left.can_refund === right.can_refund
+    && left.can_view_reports === right.can_view_reports
+    && left.can_manage_tables === right.can_manage_tables
+    && left.can_manage_menu === right.can_manage_menu
+);
 
 export function useStaffForm(restaurantId: string, onSuccess: () => void) {
     const [showStaffModal, setShowStaffModal] = React.useState(false);
@@ -100,7 +113,10 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
         setStaffFormData((prev) => ({ ...prev, [field]: value }));
     }, []);
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (
+        section: StaffSubmitSection = 'all',
+        payload?: { avatarUrl?: string },
+    ) => {
         if (!staffFormData.name || !staffFormData.role) {
             toast.error('Vui lòng nhập đầy đủ thông tin bắt buộc');
             return;
@@ -132,50 +148,185 @@ export function useStaffForm(restaurantId: string, onSuccess: () => void) {
                 }
 
                 toast.success('Tạo nhân viên thành công');
+                setShowStaffModal(false);
+                resetForm();
+                onSuccess();
+                return;
             } else if (editingStaffId) {
-                await updateRestaurantStaffInfo(restaurantId, editingStaffId, {
-                    full_name: staffFormData.name.trim() || undefined,
-                    position: (staffFormData.role as StaffPosition) || undefined,
-                    hire_date: staffFormData.startDate || undefined,
-                    phone: staffFormData.phone.trim() || undefined,
-                    email: staffFormData.email.trim() || undefined,
-                });
+                const runStep = async (endpoint: StaffApiEndpoint, action: () => Promise<unknown>) => {
+                    try {
+                        await action();
+                    } catch (error) {
+                        throw toStaffEndpointError(endpoint, error);
+                    }
+                };
 
-                const updateTasks: Array<Promise<unknown>> = [];
+                const normalizedName = staffFormData.name.trim();
+                const normalizedRole = staffFormData.role as StaffPosition;
+                const normalizedHireDate = staffFormData.startDate || '';
+                const normalizedPhone = staffFormData.phone.trim();
+                const normalizedEmail = staffFormData.email.trim();
+                const normalizedUserId = staffFormData.userId.trim();
+                const normalizedAvatar = (payload?.avatarUrl ?? staffFormData.avatar).trim();
 
-                if (staffFormData.userId.trim() && staffFormData.userId.trim() !== originalDetail?.user_id) {
-                    updateTasks.push(linkRestaurantStaffAccount(restaurantId, editingStaffId, {
-                        user_id: staffFormData.userId.trim(),
+                const originalPermissions: StaffFormData['permissions'] = originalDetail?.permissions
+                    ? {
+                        can_discount: originalDetail.permissions.can_discount,
+                        can_cancel_order: originalDetail.permissions.can_cancel_order,
+                        can_process_payment: originalDetail.permissions.can_process_payment,
+                        can_refund: originalDetail.permissions.can_refund,
+                        can_view_reports: originalDetail.permissions.can_view_reports,
+                        can_manage_tables: originalDetail.permissions.can_manage_tables,
+                        can_manage_menu: originalDetail.permissions.can_manage_menu,
+                    }
+                    : DEFAULT_FORM_DATA.permissions;
+
+                const shouldUpdateInfo = (
+                    normalizedName !== (originalDetail?.full_name ?? '').trim()
+                    || normalizedRole !== originalDetail?.position
+                    || normalizedHireDate !== (originalDetail?.hire_date?.slice(0, 10) ?? '')
+                    || normalizedPhone !== (originalDetail?.phone ?? '').trim()
+                    || normalizedEmail !== (originalDetail?.email ?? '').trim()
+                );
+
+                const shouldLinkAccount = Boolean(
+                    normalizedUserId && normalizedUserId !== (originalDetail?.user_id ?? '')
+                );
+
+                const shouldUpdateStatus = Boolean(
+                    staffFormData.status && staffFormData.status !== originalDetail?.status
+                );
+
+                const shouldUpdateAvatar = Boolean(
+                    normalizedAvatar
+                    && normalizedAvatar !== (originalDetail?.avatar_url ?? '')
+                    && /^https?:\/\//.test(normalizedAvatar)
+                );
+
+                const shouldUpdatePermissions = !arePermissionsEqual(
+                    staffFormData.permissions,
+                    originalPermissions,
+                );
+
+                const updateInfo = async () => {
+                    if (!shouldUpdateInfo) {
+                        toast.success('Không có thay đổi ở phần thông tin hồ sơ');
+                        return false;
+                    }
+
+                    await runStep('update-info', () => updateRestaurantStaffInfo(restaurantId, editingStaffId, {
+                        full_name: normalizedName || undefined,
+                        position: normalizedRole || undefined,
+                        hire_date: normalizedHireDate || undefined,
+                        phone: normalizedPhone || undefined,
+                        email: normalizedEmail || undefined,
                     }));
-                }
+                    toast.success('Đã cập nhật thông tin hồ sơ');
+                    return true;
+                };
 
-                if (staffFormData.status && originalDetail?.status !== staffFormData.status) {
-                    updateTasks.push(updateRestaurantStaffStatus(restaurantId, editingStaffId, {
+                const updateAccount = async () => {
+                    if (!shouldLinkAccount) {
+                        toast.success('Không có thay đổi ở phần liên kết tài khoản');
+                        return false;
+                    }
+
+                    await runStep('link-account', () => linkRestaurantStaffAccount(restaurantId, editingStaffId, {
+                        user_id: normalizedUserId,
+                    }));
+                    toast.success('Đã cập nhật liên kết tài khoản');
+                    return true;
+                };
+
+                const updateStatus = async () => {
+                    if (!shouldUpdateStatus) {
+                        toast.success('Không có thay đổi ở phần trạng thái');
+                        return false;
+                    }
+
+                    await runStep('update-status', () => updateRestaurantStaffStatus(restaurantId, editingStaffId, {
                         status: staffFormData.status as StaffStatus,
                     }));
+                    toast.success('Đã cập nhật trạng thái');
+                    return true;
+                };
+
+                const updateAvatar = async () => {
+                    if (!shouldUpdateAvatar) {
+                        toast.success('Không có thay đổi ở phần ảnh đại diện');
+                        return false;
+                    }
+
+                    await runStep('update-avatar', () => updateRestaurantStaffAvatar(restaurantId, editingStaffId, {
+                        avatar_url: normalizedAvatar,
+                    }));
+                    toast.success('Đã cập nhật ảnh đại diện');
+                    return true;
+                };
+
+                const updatePermissions = async () => {
+                    if (!shouldUpdatePermissions) {
+                        toast.success('Không có thay đổi ở phần quyền truy cập');
+                        return false;
+                    }
+
+                    await runStep('update-permissions', () => updateRestaurantStaffPermissions(
+                        restaurantId,
+                        editingStaffId,
+                        staffFormData.permissions,
+                    ));
+                    toast.success('Đã cập nhật quyền truy cập');
+                    return true;
+                };
+
+                if (section === 'info') {
+                    const didUpdate = await updateInfo();
+                    if (didUpdate) await onSuccess();
+                    return;
                 }
 
-                if (staffFormData.avatar && staffFormData.avatar !== originalDetail?.avatar_url && /^https?:\/\//.test(staffFormData.avatar)) {
-                    updateTasks.push(updateRestaurantStaffAvatar(restaurantId, editingStaffId, { avatar_url: staffFormData.avatar }));
+                if (section === 'account') {
+                    const didUpdate = await updateAccount();
+                    if (didUpdate) await onSuccess();
+                    return;
                 }
 
-                if (staffFormData.permissions) {
-                    updateTasks.push(updateRestaurantStaffPermissions(restaurantId, editingStaffId, staffFormData.permissions));
+                if (section === 'status') {
+                    const didUpdate = await updateStatus();
+                    if (didUpdate) await onSuccess();
+                    return;
                 }
 
-                if (updateTasks.length > 0) {
-                    await Promise.all(updateTasks);
+                if (section === 'avatar') {
+                    const didUpdate = await updateAvatar();
+                    if (didUpdate) await onSuccess();
+                    return;
                 }
 
-                toast.success('Cập nhật nhân viên thành công');
+                if (section === 'permissions') {
+                    const didUpdate = await updatePermissions();
+                    if (didUpdate) await onSuccess();
+                    return;
+                }
+
+                let hasAnyUpdate = false;
+                hasAnyUpdate = (await updateInfo()) || hasAnyUpdate;
+                hasAnyUpdate = (await updateAccount()) || hasAnyUpdate;
+                hasAnyUpdate = (await updateStatus()) || hasAnyUpdate;
+                hasAnyUpdate = (await updateAvatar()) || hasAnyUpdate;
+                hasAnyUpdate = (await updatePermissions()) || hasAnyUpdate;
+
+                if (hasAnyUpdate) {
+                    toast.success('Cập nhật nhân viên thành công');
+                    setShowStaffModal(false);
+                    resetForm();
+                    onSuccess();
+                }
+                return;
             }
-
-            setShowStaffModal(false);
-            resetForm();
-            onSuccess();
         } catch (error) {
-            const endpoint = staffModalMode === 'add' ? 'create' : 'update-info';
-            toast.error(toStaffEndpointError(endpoint, error).message);
+            const fallbackEndpoint: StaffApiEndpoint = staffModalMode === 'add' ? 'create' : 'update-info';
+            toast.error(toStaffEndpointError(fallbackEndpoint, error).message);
         } finally {
             setIsSubmitting(false);
         }

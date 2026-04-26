@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '@/components/AppIcon';
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 import { Spinner } from '@/components/ui/spinner';
-import { demoRestaurant } from '@/features/pos/pos-mock';
+import { useRequiredPosData } from '@/features/pos/contexts/usePosContext';
 import type { StaffDetail, StaffPosition } from '@/types/staff-type';
 import type { Staff } from './components/StaffCard';
 import Button from '../../components/Button';
@@ -19,7 +19,8 @@ import { getRestaurantStaffDetail, toStaffEndpointError } from '@/services/staff
 import { toast } from 'sonner';
 
 const StaffSection: React.FC = () => {
-    const restaurantId = demoRestaurant.id;
+    const posData = useRequiredPosData();
+    const restaurantId = posData.restaurant._id;
     const [viewMode, setViewMode] = React.useState<'cards' | 'table'>('cards');
     const [showDetailsModal, setShowDetailsModal] = React.useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);

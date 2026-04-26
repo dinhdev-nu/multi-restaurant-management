@@ -4,7 +4,7 @@ import Button from '@/features/pos/components/Button';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type UserRole = 'staff' | 'manager' | 'owner';
+type UserRole = 'staff' | 'admin' | 'owner';
 
 interface NavItem {
   label: string;
@@ -30,35 +30,35 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Bán hàng',
     section: 'main-pos',
     icon: 'Monitor',
-    roles: ['staff', 'manager', 'owner'],
+    roles: ['staff', 'admin', 'owner'],
     description: 'Giao diện bán hàng chính',
   },
   {
     label: 'Bàn ăn',
     section: 'table',
     icon: 'Table',
-    roles: ['staff', 'manager', 'owner'],
+    roles: ['staff', 'admin', 'owner'],
     description: 'Quản lý bàn ăn',
   },
   {
     label: 'Thanh toán',
     section: 'payment',
     icon: 'CreditCard',
-    roles: ['staff', 'manager', 'owner'],
+    roles: ['staff', 'admin', 'owner'],
     description: 'Xử lý thanh toán',
   },
   {
     label: 'Lịch sử',
     section: 'order',
     icon: 'History',
-    roles: ['manager', 'owner'],
+    roles: ['admin', 'owner'],
     description: 'Lịch sử đơn hàng',
   },
   {
     label: 'Thực đơn',
     section: 'menu',
     icon: 'Utensils',
-    roles: ['manager', 'owner'],
+    roles: ['admin', 'owner'],
     description: 'Quản lý thực đơn',
   },
   {

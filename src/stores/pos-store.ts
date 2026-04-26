@@ -1,41 +1,8 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import type { PosTables } from '@/types/pos-init-type';
 
 export type POSSection = 'main-pos' | 'table' | 'payment' | 'order' | 'menu' | 'staff';
-
-export interface CartItem {
-  _id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  status?: string;
-  note?: string;
-}
-
-export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
-export type PaymentStatus = 'paid' | 'unpaid';
-
-export interface OrderItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-export interface Order {
-  _id: string;
-  orderNumber?: string;
-  status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  table?: string;
-  staff?: string;
-  items?: OrderItem[];
-  total?: number;
-  subtotal?: number;
-  discount?: number;
-  tax?: number;
-  createdAt?: string;
-  expiredAt?: string;
-  customer?: { name: string; contact?: string };
-}
 
 export interface MenuItem {
   _id: string;
@@ -55,91 +22,74 @@ export interface Category {
 }
 
 export interface POSState {
-  isOperational: boolean;
-  activeSection: POSSection;
-
-  categories: Category[];
+  tables: PosTables | null;
+  menuCategories: Category[];
   menuItems: MenuItem[];
 
-  cartItems: CartItem[];
-  orderNumber: string | null;
-  selectedTable: string | null;
-  selectedStaff: string | null;
-  draftOrderId: string | null;
-  draftCustomerInfo: { name: string } | null;
-  isCreatingOrder: boolean;
-
-  customerOrders: Order[];
-
-  // Actions
-  toggleOperational: () => void;
-  setActiveSection: (section: POSSection) => void;
-
-  setCartItems: (items: CartItem[]) => void;
-  addToCart: (item: MenuItem | { _id: string; name: string; price: number; icon?: string }) => void;
-  updateQuantity: (id: string, qty: number) => void;
-  removeItem: (id: string) => void;
-  updateNote: (id: string, note: string) => void;
-  clearCart: () => void;
-  
-  setSelectedTable: (table: string | null) => void;
-  setSelectedStaff: (staff: string | null) => void;
+  setTables: (tables: PosTables) => void;
+  setMenuCategories: (categories: Category[]) => void;
+  setMenuItems: (items: MenuItem[]) => void;
 }
 
-export const usePOSStore = create<POSState>((set) => ({
-  isOperational: true,
-  activeSection: 'main-pos',
+const POS_STORAGE_KEY = 'pos_store';
 
-  categories: [],
-  menuItems: [],
+const createEmptyTables = (): PosTables => ({
+  total: [],
+  available: [],
+  occupied: [],
+  reserved: [],
+  cleaning: [],
+  inactive: [],
+});
 
-  cartItems: [],
-  orderNumber: null,
-  selectedTable: null,
-  selectedStaff: null,
-  draftOrderId: null,
-  draftCustomerInfo: null,
-  isCreatingOrder: false,
+function normalizeTables(tables: unknown): PosTables {
+  if (!tables || typeof tables !== 'object') {
+    return createEmptyTables();
+  }
 
-  customerOrders: [],
+  const candidate = tables as Record<string, unknown>;
+  return {
+    total: Array.isArray(candidate.total) ? candidate.total : [],
+    available: Array.isArray(candidate.available) ? candidate.available : [],
+    occupied: Array.isArray(candidate.occupied) ? candidate.occupied : [],
+    reserved: Array.isArray(candidate.reserved) ? candidate.reserved : [],
+    cleaning: Array.isArray(candidate.cleaning) ? candidate.cleaning : [],
+    inactive: Array.isArray(candidate.inactive) ? candidate.inactive : [],
+  };
+}
 
-  toggleOperational: () => set((state) => ({ isOperational: !state.isOperational })),
-  setActiveSection: (section) => set({ activeSection: section }),
+export const usePOSStore = create<POSState>()(
+  persist(
+    (set) => ({
+      tables: null,
+      menuCategories: [],
+      menuItems: [],
 
-  setCartItems: (items) => set({ cartItems: items }),
-  addToCart: (item) => set((state) => {
-    const existing = state.cartItems.find(i => i._id === item._id);
-    if (existing) {
-      return {
-        cartItems: state.cartItems.map(i =>
-          i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i
-        )
-      };
-    }
-    return {
-      cartItems: [
-        ...state.cartItems,
-        {
-          _id: item._id,
-          name: item.name,
-          price: item.price,
-          quantity: 1,
-          note: ''
+      setTables: (tables) => set({ tables: normalizeTables(tables) }),
+      setMenuCategories: (menuCategories) => set({ menuCategories }),
+      setMenuItems: (menuItems) => set({ menuItems }),
+    }),
+    {
+      name: POS_STORAGE_KEY,
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        tables: state.tables,
+        menuCategories: state.menuCategories,
+        menuItems: state.menuItems,
+      }),
+      migrate: (persistedState) => {
+        if (!persistedState || typeof persistedState !== 'object') {
+          return { tables: null, menuCategories: [], menuItems: [] };
         }
-      ]
-    };
-  }),
-  updateQuantity: (id, qty) => set((state) => ({
-    cartItems: state.cartItems.map(i => i._id === id ? { ...i, quantity: qty } : i)
-  })),
-  removeItem: (id) => set((state) => ({
-    cartItems: state.cartItems.filter(i => i._id !== id)
-  })),
-  updateNote: (id, note) => set((state) => ({
-    cartItems: state.cartItems.map(i => i._id === id ? { ...i, note } : i)
-  })),
-  clearCart: () => set({ cartItems: [] }),
 
-  setSelectedTable: (table) => set({ selectedTable: table }),
-  setSelectedStaff: (staff) => set({ selectedStaff: staff }),
-}));
+        const state = persistedState as Record<string, unknown>;
+        return {
+          tables: state.tables ? normalizeTables(state.tables) : null,
+          menuCategories: Array.isArray(state.menuCategories) ? state.menuCategories : [],
+          menuItems: Array.isArray(state.menuItems) ? state.menuItems : [],
+        };
+      },
+    }
+  )
+);

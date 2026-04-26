@@ -81,6 +81,7 @@ export function ProfileSection() {
     const baseDateOfBirth = profile?.date_of_birth?.slice(0, 10) || ""
     const baseTheme = preferences?.theme ?? "light"
     const baseLanguage = preferences?.language ?? "vi"
+    const userCode = profile?._id ?? ""
 
     const resolvedFirstName = firstName ?? profileNameParts.firstName
     const resolvedLastName = lastName ?? profileNameParts.lastName
@@ -112,8 +113,26 @@ export function ProfileSection() {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card className="border-border bg-card">
                 <CardHeader>
-                    <CardTitle className="text-base font-medium">Personal Information</CardTitle>
-                    <CardDescription>Update your personal details and preferences</CardDescription>
+                    <div className="flex items-start justify-between gap-3">
+                        <div>
+                            <CardTitle className="text-base font-medium">Personal Information</CardTitle>
+                            <CardDescription>Update your personal details and preferences</CardDescription>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={!userCode}
+                            onClick={() => {
+                                if (!userCode) return
+                                void navigator.clipboard.writeText(userCode)
+                                toast.success("Đã sao chép mã của bạn")
+                            }}
+                        >
+                            <Copy className="w-3.5 h-3.5 mr-1.5" />
+                            Copy mã của bạn
+                        </Button>
+                    </div>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
@@ -139,6 +158,7 @@ export function ProfileSection() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                         <div className="space-y-2">
                             <Label htmlFor="firstName">First Name</Label>
                             <InputGroup>

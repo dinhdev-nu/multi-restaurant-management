@@ -98,7 +98,7 @@ Kết luận zero-omission:
 - Các field không xuất hiện ở một số response đã được nêu rõ lý do: endpoint command trả payload tối giản, hoặc endpoint list/create tối ưu payload, hoặc detail mask theo role.
 
 ---
-
+2.1 2.2.2.3 2.9 2.4 2.7  2.5 2.6 2.8
 ## 2. API Specification
 
 ## 2.1 POST /restaurants/{id}/staff

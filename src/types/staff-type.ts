@@ -16,6 +16,8 @@ export interface StaffSummary {
   id: string
   employee_code: string
   full_name: string
+  phone?: string | null
+  email?: string | null
   position: StaffPosition
   status: StaffStatus
   hire_date: string
@@ -70,6 +72,8 @@ export interface CreateStaffResponseData {
   id: string
   employee_code: string
   full_name: string
+  email: string | null
+  phone: string | null
   position: StaffPosition
   hire_date: string
   status: StaffStatus
